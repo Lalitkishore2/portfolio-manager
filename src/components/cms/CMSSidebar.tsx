@@ -11,6 +11,7 @@ import {
   Sparkles,
   Loader2,
   Check,
+  LogOut,
 } from "lucide-react";
 
 export type CMSView =
@@ -247,6 +248,47 @@ export function CMSSidebar({
             3 files changed
           </div>
         </div>
+
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch("/api/auth/logout", { method: "POST" });
+              if (res.ok) {
+                window.location.href = "/login";
+              }
+            } catch (e) {
+              console.error("Logout failed", e);
+            }
+          }}
+          style={{
+            width: "100%",
+            marginTop: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            background: "transparent",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
+            borderRadius: 8,
+            color: "#f87171",
+            fontSize: 13,
+            fontWeight: 500,
+            fontFamily: "'Inter', sans-serif",
+            cursor: "pointer",
+            transition: "all 120ms",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "rgba(239, 68, 68, 0.08)";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(239, 68, 68, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+            (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(239, 68, 68, 0.2)";
+          }}
+        >
+          <LogOut size={14} style={{ flexShrink: 0 }} />
+          <span style={{ flex: 1, textAlign: "left" }}>Log Out</span>
+        </button>
       </div>
 
       <style>{`
