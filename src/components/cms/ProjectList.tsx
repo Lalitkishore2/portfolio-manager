@@ -32,10 +32,11 @@ interface ProjectListProps {
 export function ProjectList({ projects, onSelectProject, onNewProject }: ProjectListProps) {
   const [search, setSearch] = useState("");
 
+  const query = search.toLowerCase();
   const filtered = projects.filter(
     (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.tagline.toLowerCase().includes(search.toLowerCase())
+      p.title.toLowerCase().includes(query) ||
+      p.tagline.toLowerCase().includes(query)
   );
 
   return (
