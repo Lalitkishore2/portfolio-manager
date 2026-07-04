@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio Manager CMS
+
+This is a standalone Next.js administration panel designed to manage and update the Deconstructivist Portfolio database. 
+
+## Design and Features
+
+The application is built using Next.js, Tailwind CSS, and Shadcn UI components, offering:
+- Dynamic project editor with validation and custom architecture mapping.
+- Profile, skills, and experience editors.
+- AI-assisted page creation using model APIs.
+- Chatbot knowledge auditor.
+- Direct integration with GitHub API to manage updates remotely.
+
+## How It Works
+
+Instead of modifying a local filesystem, this CMS uses the GitHub REST API to read and commit updates to your portfolio repository. Saving changes in the CMS commits them directly to your repository's main branch, which automatically triggers your portfolio's deployment pipeline.
+
+## Environment Configuration
+
+Create a `.env.local` file in the root directory and configure the following variables:
+
+```env
+# GitHub Configuration
+GITHUB_REPO="Lalitkishore2/portfolio"
+GITHUB_BRANCH="main"
+GITHUB_TOKEN="your_personal_access_token"
+
+# AI Provider Configuration (Optional)
+GEMINI_API_KEY="your_gemini_api_key"
+GROQ_API_KEY="your_groq_api_key"
+OPENROUTER_API_KEY="your_openrouter_api_key"
+NVIDIA_API_KEY="your_nvidia_api_key"
+OLLAMA_CLOUD_API_KEY="your_ollama_cloud_key"
+OLLAMA_CLOUD_URL="https://api.ollamacloud.io"
+```
 
 ## Getting Started
 
-First, run the development server:
+### Installation
 
+Install the dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install --legacy-peer-deps
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start the Next.js development server:
+```bash
+npm run dev
+```
+The admin panel will be available at http://localhost:3000.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Build
 
-## Learn More
+Create a production build:
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Remote Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project is configured for serverless deployment on platforms like Vercel:
+1. Import the repository in Vercel.
+2. Set the root directory configuration to the main project folder.
+3. Configure the environment variables (`GITHUB_TOKEN`, `GITHUB_REPO`, `GITHUB_BRANCH`, and AI keys) in the Vercel project settings dashboard.
+4. Deploy the application.
