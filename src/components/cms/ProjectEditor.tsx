@@ -751,20 +751,20 @@ function prepareProject(project: Project): Project {
   const clone = JSON.parse(JSON.stringify(project));
   if (clone.architecture) {
     clone.architecture = clone.architecture.map((node: any) => ({
-      id: node.id || uid(),
-      ...node
+      ...node,
+      id: node.id || uid()
     }));
   }
   if (clone.techStack) {
     clone.techStack = clone.techStack.map((group: any) => ({
-      id: group.id || uid(),
-      ...group
+      ...group,
+      id: group.id || uid()
     }));
   }
   if (clone.stats) {
     clone.stats = clone.stats.map((stat: any) => ({
-      id: stat.id || uid(),
-      ...stat
+      ...stat,
+      id: stat.id || uid()
     }));
   }
   return clone;

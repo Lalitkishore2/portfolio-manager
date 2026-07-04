@@ -150,7 +150,8 @@ export async function triggerRebuild(): Promise<string> {
     if (res.ok || res.status === 204) {
       return "Triggered GitHub Actions rebuild successfully.";
     }
-  } catch {
+    throw new Error(`Workflow dispatch failed: status ${res.status}`);
+  } catch (err) {
     // Fall through to empty commit method
   }
 

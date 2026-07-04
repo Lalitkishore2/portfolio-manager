@@ -184,7 +184,7 @@ ${JSON.stringify(currentData, null, 2)}`;
     // 4. Write back to GitHub
     await saveContentJSON(`${targetSection}.json`, newJson, `cms: AI-generated update to ${targetSection}`);
 
-    return NextResponse.json({ success: true, updatedCount: newJson.length, provider });
+    return NextResponse.json({ success: true, updatedCount: Array.isArray(newJson) ? newJson.length : 1, provider });
 
   } catch (error: any) {
     console.error("Make API Error:", error);
