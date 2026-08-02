@@ -162,38 +162,71 @@ ${JSON.stringify(currentData, null, 2)}`;
       generatedText = data.message?.content;
     }
     else {
-      // Default: Gemini
+      // Default: Gemini with automatic Groq fallback if Gemini is overloaded
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("GEMINI_API_KEY is not set.");
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents: [{ 
-              role: "user", 
-              parts: [
-                ...(body.image ? [{
-                  inlineData: {
-                    mimeType: body.image.split(';')[0].split(':')[1],
-                    data: body.image.split(',')[1]
-                  }
-                }] : []),
-                { text: userMessage }
-              ] 
-            }],
-            generationConfig: { responseMimeType: "application/json" }
-          }),
+      if (!apiKey && !process.env.GROQ_API_KEY) throw new Error("Neither GEMINI_API_KEY nor GROQ_API_KEY is set.");
+      
+      let geminiSuccess = false;
+      if (apiKey) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                contents: [{ 
+                  role: "user", 
+                  parts: [
+                    ...(body.image ? [{
+                      inlineData: {
+                        mimeType: body.image.split(';')[0].split(':')[1],
+                        data: body.image.split(',')[1]
+                      }
+                    }] : []),
+                    { text: userMessage }
+                  ] 
+                }],
+                generationConfig: { responseMimeType: "application/json" }
+              }),
+            }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (generatedText) geminiSuccess = true;
+          }
+        } catch (e) {
+          console.warn("[MAKE API] Gemini primary call failed, trying Groq fallback...");
         }
-      );
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Gemini API Error: ${res.status} - ${errText}`);
       }
-      const data = await res.json();
-      generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      // Fallback to Groq if Gemini is busy or fails
+      if (!geminiSuccess && process.env.GROQ_API_KEY) {
+        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: systemInstruction },
+              { role: "user", content: userMessage }
+            ],
+            response_format: { type: "json_object" },
+            max_tokens: 1500
+          })
+        });
+        const groqData = await groqRes.json();
+        if (groqData.choices?.[0]?.message?.content) {
+          generatedText = groqData.choices[0].message.content;
+        } else {
+          throw new Error("Gemini is currently busy and Groq fallback failed.");
+        }
+      }
     }
 
     if (!generatedText) {
