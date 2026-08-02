@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FolderOpen,
   User,
@@ -12,6 +13,7 @@ import {
   Loader2,
   Check,
   LogOut,
+  ExternalLink,
 } from "lucide-react";
 
 export type CMSView =
@@ -65,78 +67,91 @@ export function CMSSidebar({
   publishing,
   published,
 }: CMSSidebarProps) {
+  const [openDrawer, setOpenDrawer] = useState(false);
+
   const isActive = (id: CMSView) =>
     id === "projects"
       ? activeView === "projects" || activeView === "project-editor"
       : activeView === id;
 
-  return (
-    <aside
-      style={{
-        width: 56,
-        minWidth: 56,
-        height: "100%",
-        background: "#111113",
-        borderRight: "1px solid #27272a",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        fontFamily: "'Inter', sans-serif",
-      }}
-    >
-      {/* -- Header -- */}
-      <div
-        style={{
-          padding: "16px 0 14px",
-          borderBottom: "1px solid #1f1f22",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          title="LK Portfolio CMS"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#fff",
-            flexShrink: 0,
-            letterSpacing: "0.02em",
-            cursor: "pointer",
-            transition: "transform 200ms ease",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          LK
-        </div>
-      </div>
+  const ALL_NAV_SECTIONS = [
+    { title: "Content Management", items: CONTENT_NAV },
+    { title: "AI & Intelligence", items: AI_NAV },
+    { title: "System & Tokens", items: SYSTEM_NAV },
+  ];
 
-      {/* -- Nav -- */}
-      <nav
+  return (
+    <>
+      <aside
         style={{
-          flex: 1,
-          padding: "14px 8px",
-          overflowY: "auto",
+          width: 56,
+          minWidth: 56,
+          height: "100%",
+          background: "#111113",
+          borderRight: "1px solid #27272a",
           display: "flex",
           flexDirection: "column",
-          gap: 16,
-          alignItems: "center",
+          overflow: "hidden",
+          fontFamily: "'Inter', sans-serif",
+          position: "relative",
         }}
       >
-        <NavSection items={CONTENT_NAV} isActive={isActive} onNavigate={onNavigate} />
-        <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
-        <NavSection items={AI_NAV} isActive={isActive} onNavigate={onNavigate} />
-        <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
-        <NavSection items={SYSTEM_NAV} isActive={isActive} onNavigate={onNavigate} />
-      </nav>
+        {/* -- Header / LK Pop Trigger -- */}
+        <div
+          style={{
+            padding: "16px 0 14px",
+            borderBottom: "1px solid #1f1f22",
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            title="Click to view everything in expanded sidebar menu"
+            onClick={() => setOpenDrawer(!openDrawer)}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#fff",
+              flexShrink: 0,
+              letterSpacing: "0.02em",
+              cursor: "pointer",
+              boxShadow: openDrawer ? "0 0 12px rgba(59,130,246,0.6)" : "none",
+              transition: "all 200ms ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.08)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            LK
+          </div>
+        </div>
+
+        {/* -- Nav -- */}
+        <nav
+          className="no-scrollbar"
+          style={{
+            flex: 1,
+            padding: "14px 8px",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            alignItems: "center",
+          }}
+        >
+          <NavSection items={CONTENT_NAV} isActive={isActive} onNavigate={onNavigate} />
+          <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
+          <NavSection items={AI_NAV} isActive={isActive} onNavigate={onNavigate} />
+          <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
+          <NavSection items={SYSTEM_NAV} isActive={isActive} onNavigate={onNavigate} />
+        </nav>
 
       {/* -- Bottom: Publish & Logout -- */}
       <div
@@ -228,11 +243,118 @@ export function CMSSidebar({
         </button>
       </div>
 
+      {/* Pop Open Drawer Overlay */}
+      {openDrawer && (
+        <>
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.3)" }}
+            onClick={() => setOpenDrawer(false)}
+          />
+          <div
+            style={{
+              position: "fixed",
+              left: 64,
+              top: 16,
+              width: 280,
+              maxHeight: "calc(100vh - 32px)",
+              overflowY: "auto",
+              background: "rgba(17, 17, 19, 0.96)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+              borderRadius: 14,
+              boxShadow: "0 20px 50px rgba(0,0,0,0.7)",
+              zIndex: 500,
+              padding: "20px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              fontFamily: "'Inter', sans-serif",
+            }}
+            className="no-scrollbar"
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>
+                LK
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "#fafafa", fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>S V Lalitkishore</div>
+                <div style={{ color: "#71717a", fontSize: 11 }}>Portfolio Manager &amp; CMS</div>
+              </div>
+            </div>
+
+            {/* Quick Live Site Link */}
+            <a
+              href="https://lalitkishore.is-a.dev"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                background: "rgba(59,130,246,0.1)",
+                border: "1px solid rgba(59,130,246,0.25)",
+                borderRadius: 8,
+                color: "#60a5fa",
+                fontSize: 12,
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              <ExternalLink size={13} />
+              <span>lalitkishore.is-a.dev</span>
+            </a>
+
+            {/* Full Nav Sections with Labels */}
+            {ALL_NAV_SECTIONS.map((sec) => (
+              <div key={sec.title} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ color: "#71717a", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>
+                  {sec.title}
+                </div>
+                {sec.items.map(({ id, label: itemLabel, icon: Icon }) => {
+                  const active = isActive(id);
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => {
+                        onNavigate(id);
+                        setOpenDrawer(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 10px",
+                        background: active ? "#1d3461" : "transparent",
+                        border: active ? "1px solid rgba(59,130,246,0.25)" : "1px solid transparent",
+                        borderRadius: 8,
+                        color: active ? "#60a5fa" : "#a1a1aa",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: active ? 600 : 400,
+                        textAlign: "left",
+                        width: "100%",
+                        transition: "all 120ms",
+                      }}
+                    >
+                      <Icon size={15} style={{ color: active ? "#60a5fa" : "#71717a" }} />
+                      <span>{itemLabel}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .publish-btn:not(:disabled):hover { background: #1c1c1f !important; border-color: rgba(59,130,246,0.3) !important; }
       `}</style>
     </aside>
+    </>
   );
 }
 

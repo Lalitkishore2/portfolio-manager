@@ -348,6 +348,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
 
   return (
     <div
+      className="no-scrollbar"
       style={{
         flex: 1,
         width: "100%",

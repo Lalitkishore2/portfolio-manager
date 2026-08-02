@@ -41,9 +41,10 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
 
   return (
     <div
+      className="no-scrollbar"
       style={{
         flex: 1,
-        overflow: "auto",
+        overflowY: "auto",
         background: "#09090b",
         fontFamily: "'Inter', sans-serif",
       }}
