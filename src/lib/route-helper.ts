@@ -38,42 +38,39 @@ export function createContentRoute(filename: string, commitLabel: string, defaul
             return NextResponse.json({ error: "Invalid or empty JSON data" }, { status: 400 });
         }
 
-        // Fetch current sha automatically
-        let currentSha;
-        try {
-          const current = await getContentJSON(filename);
-          currentSha = current.sha;
-        } catch (e) {
-          // File might not exist yet
-        }
-
-        const { sha: newSha } = await saveContentJSON(filename, data, `cms: update ${commitLabel}`, currentSha);
-        
-        // Write locally so Astro updates immediately (Live Preview)
+        // 1. Write locally first so Astro & Portfolio update immediately (Live Preview)
         const fs = require("fs");
         const path = require("path");
-        const localPath = path.join(process.cwd(), "..", "portfolio", "content", filename);
+        const contentDir = path.join(process.cwd(), "..", "PORTFOLIO", "content");
+        const localPath = path.join(contentDir, filename);
         try {
-          if (fs.existsSync(localPath)) {
-            fs.writeFileSync(localPath, JSON.stringify(data, null, 2), "utf8");
+          if (!fs.existsSync(contentDir)) {
+            fs.mkdirSync(contentDir, { recursive: true });
           }
+          fs.writeFileSync(localPath, JSON.stringify(data, null, 2), "utf8");
         } catch (e) {
           logger.error({ err: e }, "[ROUTE HELPER] Failed to sync locally");
         }
 
-        return NextResponse.json({ success: true, sha: newSha });
-      } catch (error: any) {
-        logger.error({ err: error, filename }, `Failed to save ${filename} to GitHub`);
-        
-        if (error instanceof SyntaxError) {
-          return NextResponse.json({ error: "Malformed JSON payload" }, { status: 400 });
-        }
-        
-        // Handle GitHub API 409 Conflict
-        if (error.message.includes("409")) {
-          return NextResponse.json({ error: "Conflict: This file was modified by another user since you opened it. Please refresh and try again." }, { status: 409 });
+        // 2. Sync with remote GitHub repository
+        let newSha = "";
+        try {
+          let currentSha = payload.sha;
+          if (!currentSha) {
+            try {
+              const current = await getContentJSON(filename);
+              currentSha = current.sha;
+            } catch (e) {}
+          }
+          const res = await saveContentJSON(filename, data, `cms: update ${commitLabel}`, currentSha);
+          newSha = res.sha;
+        } catch (ghError: any) {
+          logger.error({ err: ghError, filename }, `Failed to sync ${filename} to GitHub`);
         }
 
+        return NextResponse.json({ success: true, sha: newSha });
+      } catch (error: any) {
+        logger.error({ err: error, filename }, `Failed to save ${filename}`);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
     }
