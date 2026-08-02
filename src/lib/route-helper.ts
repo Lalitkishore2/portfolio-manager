@@ -5,28 +5,35 @@ import { logger } from "@/lib/logger";
 export function createContentRoute(filename: string, commitLabel: string, defaultValue?: any) {
   return {
     async GET() {
+      const fs = require("fs");
+      const path = require("path");
+      const localPath = path.join(process.cwd(), "..", "PORTFOLIO", "content", filename);
+      
+      // If local file exists, serve it immediately so CMS UI reflects local edits instantly
+      if (fs.existsSync(localPath)) {
+        try {
+          const localData = JSON.parse(fs.readFileSync(localPath, "utf-8"));
+          let sha = "";
+          try {
+            const remote = await getContentJSON(filename);
+            sha = remote.sha;
+          } catch (e) {}
+          return NextResponse.json({ data: localData, sha });
+        } catch (e) {
+          logger.error({ err: e, filename }, "[ROUTE HELPER] Failed to parse local JSON");
+        }
+      }
+
+      // Fallback to GitHub API
       try {
         const { data, sha } = await getContentJSON(filename);
         return NextResponse.json({ data, sha });
       } catch (error: any) {
-        if (error.message.includes("404")) {
-          const fs = require("fs");
-          const path = require("path");
-          const localPath = path.join(process.cwd(), "..", "PORTFOLIO", "content", filename);
-          if (fs.existsSync(localPath)) {
-            try {
-              const localData = JSON.parse(fs.readFileSync(localPath, "utf-8"));
-              return NextResponse.json({ data: localData, sha: "" });
-            } catch (e) {}
-          }
-          let fallback = defaultValue;
-          if (fallback === undefined) {
-             fallback = filename.includes("projects") || filename.includes("experience") || filename.includes("skills") || filename.includes("queries") ? [] : {};
-          }
-          return NextResponse.json({ data: fallback, sha: "" });
+        let fallback = defaultValue;
+        if (fallback === undefined) {
+           fallback = filename.includes("projects") || filename.includes("experience") || filename.includes("skills") || filename.includes("queries") ? [] : {};
         }
-        logger.error({ err: error, filename }, `Failed to load ${filename} from GitHub`);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ data: fallback, sha: "" });
       }
     },
     async POST(request: Request) {
