@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FigmaCard, FigmaCardHeader, FigmaCardTitle, FigmaCardContent } from "./figma/FigmaCard";
 import { FigmaInput } from "./figma/FigmaInput";
-import { Save } from "lucide-react";
+import { Save, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 
 export function TokensPage() {
@@ -14,10 +14,47 @@ export function TokensPage() {
     fontPrimary: "Inter",
     fontMono: "JetBrains Mono",
   });
+  const [sha, setSha] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    // In a real app, this would save to a JSON file or API and trigger a CSS rebuild
-    toast.success("Design tokens saved successfully!");
+  useEffect(() => {
+    async function loadTokens() {
+      try {
+        const res = await fetch("/api/tokens");
+        if (res.ok) {
+          const { data, sha: tokenSha } = await res.json();
+          if (data && typeof data === "object") {
+            setTokens((prev) => ({ ...prev, ...data }));
+            setSha(tokenSha || "");
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load tokens", e);
+      }
+    }
+    loadTokens();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/tokens", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: tokens, sha }),
+      });
+      if (!res.ok) throw new Error("Failed to save tokens");
+      const { sha: newSha } = await res.json();
+      setSha(newSha);
+      setSaved(true);
+      toast.success("Design tokens saved successfully!");
+      setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      toast.error("Failed to save design tokens");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -25,7 +62,7 @@ export function TokensPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-white mb-2">Design Tokens</h1>
-          <p className="text-zinc-400 text-sm">Manage global variables and theme settings synced directly to the portfolio.</p>
+          <p className="text-zinc-400 text-sm">Manage global variables and theme settings synced directly to tokens.json.</p>
         </div>
 
         <FigmaCard>
@@ -75,10 +112,11 @@ export function TokensPage() {
         <div className="flex justify-end pt-4">
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50 cursor-pointer"
           >
-            <Save size={16} />
-            Save Tokens
+            {saving ? <Loader2 size={16} className="animate-spin" /> : saved ? <Check size={16} /> : <Save size={16} />}
+            {saving ? "Saving..." : saved ? "Saved Tokens" : "Save Tokens"}
           </button>
         </div>
       </div>

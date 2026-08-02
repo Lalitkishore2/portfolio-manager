@@ -111,7 +111,7 @@ function ChatMessageItem({ msg }: { msg: MakeMessage }) {
           <div className="pl-3 flex flex-col gap-1 pt-1 border-l border-white/5 ml-1">
             {msg.steps.map((step, i) => (
               <div key={i} className="text-[11px] text-zinc-400 flex items-center gap-1.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${step.includes("✓") ? "bg-emerald-400" : "bg-zinc-600"}`} />{step}
+                <div className={`w-1.5 h-1.5 rounded-full ${step.includes("done") ? "bg-emerald-400" : "bg-zinc-600"}`} />{step}
               </div>
             ))}
           </div>
@@ -137,7 +137,6 @@ function ChatMessageItem({ msg }: { msg: MakeMessage }) {
   if (msg.type === "error") {
     return (
       <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2 text-[11px] text-rose-400 mb-3 flex gap-2">
-        <span className="shrink-0">⚠</span>
         <span className="leading-relaxed">{msg.content}</span>
       </div>
     );

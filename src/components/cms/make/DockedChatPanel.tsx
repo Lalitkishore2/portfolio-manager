@@ -30,7 +30,7 @@ function ChatMessage({ msg }: { msg: MakeMessage }) {
           <div className="pl-4 flex flex-col gap-1 pt-1">
             {msg.steps.map((step, i) => (
               <div key={i} className="text-[12px] text-zinc-400 flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${step.includes("✓") ? "bg-emerald-400" : "bg-zinc-600"}`} />{step}
+                <div className={`w-1.5 h-1.5 rounded-full ${step.includes("done") ? "bg-emerald-400" : "bg-zinc-600"}`} />{step}
               </div>
             ))}
           </div>
@@ -56,7 +56,6 @@ function ChatMessage({ msg }: { msg: MakeMessage }) {
   if (msg.type === "error") {
     return (
       <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2 text-[12px] text-rose-400 mb-4 flex gap-2">
-        <span className="shrink-0">⚠</span>
         <span className="leading-relaxed">{msg.content}</span>
       </div>
     );
@@ -127,35 +126,41 @@ export function DockedChatPanel({ handleAccept, handleDiscard }: DockedChatPanel
         <div className="p-1.5">
           <div className="grid grid-cols-3 gap-1 bg-zinc-900/80 p-0.5 rounded-lg border border-white/5">
             <button
-              onClick={() => setActiveTab("chat")}
-              className={`py-1 text-[11px] font-medium rounded-md transition-all text-center ${
-                activeTab === "chat" ? "bg-white/10 text-white shadow-sm font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              onClick={() => setInspectTab("chat")}
+              className={`flex-1 py-1 px-2 text-[11px] font-medium rounded transition-colors flex items-center justify-center gap-1.5 ${
+                inspectTab === "chat"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
-              💬 Chat
+              Chat
             </button>
             <button
-              onClick={() => setActiveTab("inspect")}
-              className={`py-1 text-[11px] font-medium rounded-md transition-all text-center ${
-                activeTab === "inspect" ? "bg-white/10 text-white shadow-sm font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              onClick={() => setInspectTab("properties")}
+              className={`flex-1 py-1 px-2 text-[11px] font-medium rounded transition-colors flex items-center justify-center gap-1.5 ${
+                inspectTab === "properties"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
-              🎛️ Inspect
+              Inspect
             </button>
             <button
-              onClick={() => setActiveTab("versions")}
-              className={`py-1 text-[11px] font-medium rounded-md transition-all text-center ${
-                activeTab === "versions" ? "bg-white/10 text-white shadow-sm font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              onClick={() => setInspectTab("code")}
+              className={`flex-1 py-1 px-2 text-[11px] font-medium rounded transition-colors flex items-center justify-center gap-1.5 ${
+                inspectTab === "code"
+                  ? "bg-white/10 text-white font-semibold shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
               }`}
             >
-              📜 History
+              History
             </button>
           </div>
         </div>
       </div>
       
       {/* Content Body Based on Tab */}
-      {activeTab === "chat" && (
+      {inspectTab === "chat" && (
         <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col" style={{ scrollbarWidth: "none" }}>
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-10 opacity-60">

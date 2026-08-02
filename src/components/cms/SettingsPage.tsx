@@ -321,30 +321,31 @@ export function SettingsPage() {
       label: "Testing...",
     },
     success: {
-      color: "#4ade80",
+      color: "var(--cms-accent-emerald)",
       icon: <CheckCircle size={13} color="#4ade80" />,
-      label: "Connected ✓",
+      label: "Connected",
+      bg: "rgba(16,185,129,0.08)",
+      border: "rgba(16,185,129,0.2)",
     },
     error: {
-      color: "#f87171",
-      icon: <XCircle size={13} color="#f87171" />,
-      label: "Connection Failed",
+      label: "Connection Error",
+      color: "var(--cms-accent-rose)",
+      bg: "rgba(244,63,94,0.08)",
+      border: "rgba(244,63,94,0.2)",
     },
   };
   const cb = connBtnMap[connState];
 
-  const aiBtnMap = {
-    idle: {
-      color: "#c084fc",
-      label: "Test AI",
-    },
+  const AI_STATE = {
+    idle: null,
     loading: {
-      color: "#a855f7",
       label: "Testing...",
+      color: "var(--cms-text-secondary)",
+      bg: "rgba(255,255,255,0.03)",
+      border: "var(--cms-border-glass)",
     },
     success: {
-      color: "#e9d5ff",
-      label: "AI Connected ✓",
+      label: "AI Connected",
     },
     error: {
       color: "#f87171",

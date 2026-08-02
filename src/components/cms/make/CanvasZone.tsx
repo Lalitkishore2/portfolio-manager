@@ -102,7 +102,7 @@ export function CanvasZone({ iframeRef, breadcrumb }: CanvasZoneProps) {
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 bg-[#1a1a1e]/90 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-2xl">
             <span className="text-[10px] text-white/40 uppercase tracking-widest font-semibold mr-2">Quick Actions:</span>
             <button onClick={() => handleQuickAction("Rewrite this text to be more professional")} className="text-[11px] text-white/80 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full transition-colors">Rewrite</button>
-            <button onClick={() => handleQuickAction("Make this look more modern and vibrant")} className="text-[11px] text-white/80 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full transition-colors">Make it pop ✨</button>
+            <button onClick={() => handleQuickAction("Make this look more modern and vibrant")} className="text-[11px] text-white/80 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full transition-colors">Make it pop</button>
             <button onClick={() => handleQuickAction("Fix grammar and spelling")} className="text-[11px] text-white/80 hover:text-white bg-white/5 hover:bg-white/10 px-2.5 py-1 rounded-full transition-colors">Fix Grammar</button>
           </div>
         )}

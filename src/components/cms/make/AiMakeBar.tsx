@@ -51,9 +51,9 @@ export function AiMakeBar({ startGeneration }: AiMakeBarProps) {
   
   const showProcessing = generationState === "generating";
 
-  const suggestionChips = selectedNodeId
-    ? ["✨ Rewrite section", "📊 Add metrics", "🏷️ Update tech stack", "🎨 Style tweak"]
-    : ["🚀 Add new project", "👤 Update bio tagline", "⚡ Add skill category", "💼 Add experience"];
+  const presets = selectedNodeId 
+    ? ["Rewrite section", "Add metrics", "Update tech stack", "Style tweak"]
+    : ["Add new project", "Update bio tagline", "Add skill category", "Add experience"];
 
   return (
     <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] w-[640px] max-w-[92vw] gap-2">

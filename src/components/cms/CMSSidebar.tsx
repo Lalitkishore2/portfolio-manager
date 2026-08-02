@@ -6,6 +6,7 @@ import {
   BarChart2,
   Bot,
   Settings,
+  Palette,
   Github,
   Sparkles,
   Loader2,
@@ -45,7 +46,7 @@ const AI_NAV: NavItem[] = [
 ];
 
 const SYSTEM_NAV: NavItem[] = [
-  { id: "tokens",   label: "Design Tokens", icon: Settings },
+  { id: "tokens",   label: "Design Tokens", icon: Palette },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
