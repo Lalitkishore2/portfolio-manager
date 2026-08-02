@@ -12,7 +12,7 @@ export function SplitPaneLayout({ leftPanel, rightPanel, defaultLayout = [50, 50
     <div style={{ height: "100%", width: "100%", display: "flex", overflow: "hidden" }}>
       <PanelGroup direction="horizontal">
         <Panel defaultSize={defaultLayout[0]} minSize={30}>
-          <div style={{ height: "100%", overflowY: "auto", position: "relative" }}>
+          <div style={{ height: "100%", overflowY: "auto", overflowX: "hidden", position: "relative", minWidth: 0 }}>
             {leftPanel}
           </div>
         </Panel>

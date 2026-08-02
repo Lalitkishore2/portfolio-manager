@@ -197,7 +197,7 @@ export function RightDock({
           { id: "properties" as const, label: "Properties", icon: Sliders },
           { id: "chat" as const, label: "Assistant", icon: Sparkles },
           { id: "audit" as const, label: "Audit", icon: Search },
-          { id: "code" as const, label: "JSON & History", icon: Code },
+          { id: "code" as const, label: "JSON & Logs", icon: Code },
         ].map(({ id, label, icon: Icon }) => (
           <button key={id} onClick={() => setInspectTab(id)}
             className={`flex-1 py-1.5 px-1 flex items-center justify-center gap-1 text-[10px] font-medium rounded-md transition-all cursor-pointer ${

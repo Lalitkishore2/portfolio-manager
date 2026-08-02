@@ -416,18 +416,20 @@ export function ProjectEditor({ project: initial, onBack, onSave, onDelete }: Pr
         </div>
       </div>
 
-      {/* Two-column form */}
+      {/* Two-column form with responsive layout */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 320px",
+          display: "flex",
+          flexWrap: "wrap",
           gap: 20,
           padding: "24px 28px 60px",
           alignItems: "start",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
-        {/* -- LEFT COLUMN (70%) -- */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* -- LEFT COLUMN (Main fields) -- */}
+        <div style={{ flex: "1 1 360px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
 
           {/* Basic Info */}
           <Card title="Basic Info">
@@ -648,8 +650,8 @@ export function ProjectEditor({ project: initial, onBack, onSave, onDelete }: Pr
           </Card>
         </div>
 
-        {/* -- RIGHT COLUMN (30%) -- */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14, position: "sticky", top: 80 }}>
+        {/* -- RIGHT COLUMN (Sidebar fields) -- */}
+        <div style={{ flex: "1 1 280px", maxWidth: 340, minWidth: 0, display: "flex", flexDirection: "column", gap: 14 }}>
 
           {/* Status & Routing */}
           <Card title="Status & Routing">

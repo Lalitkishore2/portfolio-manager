@@ -182,7 +182,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                 className="hover:bg-white/[0.03] hover:border-white/[0.07]"
               >
                 {/* Title + tagline */}
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ color: "#fafafa", fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
                     {project.title}
                   </div>
@@ -194,7 +194,6 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
-                      maxWidth: 380,
                     }}
                   >
                     {project.tagline}

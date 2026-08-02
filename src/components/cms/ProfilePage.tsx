@@ -327,8 +327,8 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
             <span style={S.sectionLabel}>Identity</span>
             <div style={S.sectionLine} />
           </div>
-          <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "flex-start" }}>
+            <div style={{ flex: "1 1 300px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 }}>
               <div>
                 <label style={S.label}>Full Name</label>
                 <input value={name} onChange={(e) => setName(e.target.value)} style={S.input} />
