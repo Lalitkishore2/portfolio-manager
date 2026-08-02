@@ -150,7 +150,7 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
   const unreviewedCount = queries.filter((q) => q.status === "unreviewed").length;
 
   return (
-    <div style={{ paddingTop: 60, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ flex: 1, width: "100%", paddingTop: 60, height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden", fontFamily: "'Inter', sans-serif" }}>
       {/* Page header */}
       <div style={{ height: 56, padding: "0 24px", borderBottom: "1px solid #1f1f22", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <div>

@@ -305,12 +305,15 @@ export function AnalyticsDashboard() {
   return (
     <div
       style={{
+        flex: 1,
+        width: "100%",
         paddingTop: 60,
         height: "100vh",
         overflowY: "auto",
         overflowX: "hidden",
         background: "var(--cms-bg-obsidian)",
         fontFamily: "'Inter', sans-serif",
+        boxSizing: "border-box",
       }}
     >
       <div style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }}>
@@ -474,7 +477,7 @@ export function AnalyticsDashboard() {
         </div>
 
         {/* Bottom grid: Quick Actions + Activity + Calendar */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
           {/* Quick Actions */}
           <GlassCard>
             <div style={{ padding: "20px 22px" }}>
@@ -485,7 +488,7 @@ export function AnalyticsDashboard() {
                 <QuickAction
                   icon={Zap}
                   label="Force Rebuild Website"
-                  desc="Trigger GitHub Pages CI immediately"
+                  desc="Trigger GitHub Pages CI build immediately"
                   color="var(--cms-accent-cobalt)"
                   onClick={() => setShowConfirm(true)}
                   loading={rebuilding}
@@ -493,22 +496,22 @@ export function AnalyticsDashboard() {
                 />
                 <QuickAction
                   icon={ExternalLink}
-                  label="View Live Site"
-                  desc="Open lalitkishore.dev in new tab"
+                  label="View Live Portfolio"
+                  desc="Open lalitkishore.is-a.dev in new tab"
                   color="var(--cms-accent-emerald)"
-                  onClick={() => window.open("https://lalitkishore.dev", "_blank")}
+                  onClick={() => window.open("https://lalitkishore.is-a.dev", "_blank")}
                 />
                 <QuickAction
                   icon={MessageSquare}
-                  label="Review Chat Logs"
-                  desc="42 unresolved chatbot queries"
+                  label="Review Chatbot Queries"
+                  desc="Inspect unreviewed queries in Auditor"
                   color="#a78bfa"
                   onClick={() => {}}
                 />
                 <QuickAction
                   icon={Code}
-                  label="View Last Commit"
-                  desc="8ef1c3b — chore(content): update projects"
+                  label="Database Status"
+                  desc={`${projectsCount} Projects & ${skillsCount} Skills Synced`}
                   color="#f59e0b"
                   onClick={() => {}}
                 />
@@ -523,7 +526,12 @@ export function AnalyticsDashboard() {
                 Recent Activity
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {ACTIVITY.map((item, i) => {
+                {[
+                  { type: "commit", text: "Commit pushed to main", meta: "da60b550", time: "5 min ago" },
+                  { type: "deploy", text: "GitHub Pages deploy complete", meta: "Pages CI #148", time: "8 min ago" },
+                  { type: "bot",    text: "Chatbot knowledge updated", meta: "chatbot.json", time: "22 min ago" },
+                  { type: "commit", text: "Content validation passed", meta: "tokens.json", time: "1h ago" },
+                ].map((item, i, arr) => {
                   const Icon = item.type === "commit" ? Code : item.type === "bot" ? Bot : Globe;
                   const color = item.type === "commit" ? "var(--cms-accent-cobalt)" : item.type === "bot" ? "#a78bfa" : "var(--cms-accent-emerald)";
                   return (
@@ -534,7 +542,7 @@ export function AnalyticsDashboard() {
                         alignItems: "center",
                         gap: 12,
                         padding: "12px 0",
-                        borderBottom: i < ACTIVITY.length - 1 ? "1px solid var(--cms-border-dark)" : "none",
+                        borderBottom: i < arr.length - 1 ? "1px solid var(--cms-border-dark)" : "none",
                       }}
                     >
                       <div
@@ -557,10 +565,10 @@ export function AnalyticsDashboard() {
                         <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
                           <span style={{ color: "var(--cms-text-secondary)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{item.meta}</span>
                           <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>·</span>
-                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }} title={item.exact}>{item.time}</span>
+                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>{item.time}</span>
                         </div>
                       </div>
-                      <a href="#" style={{ color: "var(--cms-accent-cobalt)", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
+                      <a href="https://github.com/Lalitkishore2/portfolio" target="_blank" rel="noreferrer" style={{ color: "var(--cms-accent-cobalt)", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
                         <ExternalLink size={10} />
                       </a>
                     </div>
@@ -571,7 +579,7 @@ export function AnalyticsDashboard() {
           </GlassCard>
 
           {/* Glass Calendar Component */}
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <GlassCalendar className="h-full" />
           </div>
         </div>
