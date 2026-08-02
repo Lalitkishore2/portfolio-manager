@@ -9,8 +9,13 @@ export function createContentRoute(filename: string, commitLabel: string, defaul
         const { data, sha } = await getContentJSON(filename);
         return NextResponse.json({ data, sha });
       } catch (error: any) {
-        if (defaultValue !== undefined && error.message.includes("404")) {
-          return NextResponse.json({ data: defaultValue, sha: "" });
+        if (error.message.includes("404")) {
+          let fallback = defaultValue;
+          if (fallback === undefined) {
+             // Try to infer from filename
+             fallback = filename.includes("projects") || filename.includes("experience") || filename.includes("skills") || filename.includes("queries") ? [] : {};
+          }
+          return NextResponse.json({ data: fallback, sha: "" });
         }
         logger.error({ err: error, filename }, `Failed to load ${filename} from GitHub`);
         return NextResponse.json({ error: error.message }, { status: 500 });
