@@ -26,6 +26,7 @@ const PROJECTS_MAP: Record<string, string> = {
   farmex: "Farmex AI Advisory",
   careersight: "CareerSight",
   parking: "Smart Parking System",
+  esp32: "ESP32-S3 Storage OS",
 };
 
 const SECTIONS = [
