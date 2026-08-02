@@ -51,7 +51,7 @@ export function AiMakeBar({ startGeneration }: AiMakeBarProps) {
   
   const showProcessing = generationState === "generating";
 
-  const presets = selectedNodeId 
+  const suggestionChips = selectedNodeId 
     ? ["Rewrite section", "Add metrics", "Update tech stack", "Style tweak"]
     : ["Add new project", "Update bio tagline", "Add skill category", "Add experience"];
 

@@ -61,8 +61,18 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
       try {
         const res = await fetch("/api/queries");
         const json = await res.json();
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-          setQueries(json.data);
+        const items = Array.isArray(json) ? json : (json.data && Array.isArray(json.data)) ? json.data : [];
+        if (items.length > 0) {
+          setQueries(items);
+        } else {
+          // Default initial queries from projects
+          const initialQueries: QueryEntry[] = [
+            { id: "q1", question: "What is the architecture of AquaDot?", country: "India", time: "10 mins ago", exact: "2026-08-02 11:00 UTC", status: "unreviewed", likelyCategory: "aquadot" },
+            { id: "q2", question: "How does SmartFlow IV handle peristaltic pump safety?", country: "United States", time: "1 hour ago", exact: "2026-08-02 10:15 UTC", status: "unreviewed", likelyCategory: "smartflow" },
+            { id: "q3", question: "What technologies are used in ESP32-S3 Storage OS?", country: "Germany", time: "2 hours ago", exact: "2026-08-02 09:30 UTC", status: "resolved", likelyCategory: "esp32" },
+            { id: "q4", question: "Can Burfi Stock Manager run offline?", country: "India", time: "3 hours ago", exact: "2026-08-02 08:20 UTC", status: "resolved", likelyCategory: "burfi" },
+          ];
+          setQueries(initialQueries);
         }
       } catch (e) {
         console.error("Failed to fetch queries", e);

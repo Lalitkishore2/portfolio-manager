@@ -336,19 +336,25 @@ export function SettingsPage() {
   };
   const cb = connBtnMap[connState];
 
-  const AI_STATE = {
-    idle: null,
+  const aiBtnMap = {
+    idle: {
+      color: "#c084fc",
+      icon: <Sparkles size={13} color="#c084fc" />,
+      label: "Test AI",
+    },
     loading: {
+      color: "#a855f7",
+      icon: <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />,
       label: "Testing...",
-      color: "var(--cms-text-secondary)",
-      bg: "rgba(255,255,255,0.03)",
-      border: "var(--cms-border-glass)",
     },
     success: {
+      color: "#e9d5ff",
+      icon: <CheckCircle size={13} color="#4ade80" />,
       label: "AI Connected",
     },
     error: {
       color: "#f87171",
+      icon: <XCircle size={13} color="#f87171" />,
       label: "API Error",
     },
   };

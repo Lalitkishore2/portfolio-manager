@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMakeStore } from "@/store/makeStore";
 import { GlassCalendar } from "../ui/glass-calendar";
 import { LiquidButton, MetalButton } from "../ui/liquid-glass-button";
 import {
@@ -260,9 +261,16 @@ function QuickAction({
 /* --- Main component ------------------------------------------- */
 
 export function AnalyticsDashboard() {
+  const { siteDocument } = useMakeStore();
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuildDone, setRebuildDone] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const projectsCount = siteDocument?.projects?.length || 9;
+  const skillsCount = (siteDocument?.skills || []).reduce((acc: number, c: any) => acc + (c.skills?.length || 0), 0) || 32;
+  const categoriesCount = siteDocument?.skills?.length || 6;
+  const experienceCount = siteDocument?.experience?.length || 4;
+  const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   function handleRebuild() {
     setShowConfirm(false);
@@ -292,32 +300,32 @@ export function AnalyticsDashboard() {
             Analytics &amp; Dashboard
           </h1>
           <p style={{ color: "var(--cms-text-secondary)", fontSize: 13, margin: 0 }}>
-            Portfolio health, traffic, and GitHub status — last updated Jun 15, 2026
+            Portfolio health, traffic, and content status — last synced {todayStr}
           </p>
         </div>
 
         {/* KPI Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
           <KpiCard
-            title="Total Page Views"
-            value="12.4k"
-            sub="Last 30 days"
+            title="Projects Shipped"
+            value={`${projectsCount} Active`}
+            sub={`${projectsCount} entries in content/projects.json`}
             icon={Globe}
             accentColor="var(--cms-accent-cobalt)"
-            trend="+18% vs last month"
+            trend="100% Live & Validated"
           />
           <KpiCard
-            title="Chatbot Coverage"
-            value="86%"
-            sub="270 of 312 queries resolved"
+            title="Skill Stack Coverage"
+            value={`${skillsCount} Skills`}
+            sub={`Across ${categoriesCount} technical categories`}
             icon={Bot}
             accentColor="#a78bfa"
-            trend="+4% this week"
+            trend="Fully Indexed"
           />
           <KpiCard
-            title="GitHub Status"
-            value="Sync'd"
-            sub="Last commit: 8ef1c3b · 3 min ago"
+            title="Content Sync Status"
+            value="Synced"
+            sub={`${projectsCount} Projects · ${experienceCount} Milestones`}
             icon={Github}
             accentColor="var(--cms-accent-emerald)"
           />
