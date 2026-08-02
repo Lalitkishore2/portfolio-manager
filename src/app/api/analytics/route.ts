@@ -54,20 +54,48 @@ export async function GET() {
       resolvedQueries = queries.filter((q: any) => q.status === "resolved").length;
     }
 
-    // 4. Generate dynamic 30-day traffic trend based on activity
-    const now = new Date();
-    const trafficData = [];
-    const baseViews = 1200; // Starting baseline
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(now.getDate() - i);
-      const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      
-      const progress = (29 - i) / 29;
-      const trend = baseViews * (1 + 0.18 * progress);
-      const randomFactor = 1 + (Math.random() * 0.16 - 0.08);
-      
-      trafficData.push({ day: dayLabel, views: Math.floor(trend * randomFactor) });
+    // 4. Generate dynamic traffic trend based on GitHub API
+    let trafficData: Array<{ day: string; views: number }> = [];
+    try {
+      const token = process.env.CMS_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
+      const repo = process.env.GITHUB_REPO;
+      if (token && repo) {
+        const res = await fetch(`https://api.github.com/repos/${repo}/traffic/views`, {
+          headers: {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": `token ${token}`
+          },
+          next: { revalidate: 3600 }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.views && data.views.length > 0) {
+            trafficData = data.views.map((v: any) => ({
+              day: new Date(v.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+              views: v.count
+            }));
+          }
+        } else {
+          console.error("Failed to fetch GitHub traffic:", await res.text());
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching GitHub traffic", e);
+    }
+
+    // Fallback if GitHub API fails or returns no data
+    if (trafficData.length === 0) {
+      const now = new Date();
+      const baseViews = 1200; // Starting baseline
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const progress = (29 - i) / 29;
+        const trend = baseViews * (1 + 0.18 * progress);
+        const randomFactor = 1 + (Math.random() * 0.16 - 0.08);
+        trafficData.push({ day: dayLabel, views: Math.floor(trend * randomFactor) });
+      }
     }
 
     return NextResponse.json({

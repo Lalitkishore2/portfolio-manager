@@ -417,7 +417,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                     Portfolio Traffic
                   </div>
                   <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, marginTop: 2 }}>
-                    Daily page views over 30 days
+                    Daily repository views (Last 14 days)
                   </div>
                 </div>
                 <div
@@ -434,7 +434,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                   }}
                 >
                   <TrendingUp size={11} />
-                  +18% MoM
+                  Live GitHub Data
                 </div>
               </div>
 
