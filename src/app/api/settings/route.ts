@@ -62,7 +62,7 @@ export async function GET() {
     "GITHUB_REPO", "GITHUB_TOKEN", "GITHUB_BRANCH", "ASTRO_PREVIEW_URL",
     "OPENROUTER_API_KEY", "GROQ_API_KEY", "GEMINI_API_KEY",
     "NVIDIA_API_KEY", "OLLAMA_CLOUD_API_KEY", "OLLAMA_CLOUD_URL",
-    "DEFAULT_AI_MODEL",
+    "DEFAULT_AI_MODEL", "GA_PROPERTY_ID", "GA_CLIENT_EMAIL", "GA_PRIVATE_KEY", "PUBLIC_GA_MEASUREMENT_ID"
   ];
   processKeys.forEach((key) => {
     if (process.env[key]) env[key] = process.env[key]!;
@@ -80,6 +80,10 @@ export async function GET() {
     ollamaKey: env.OLLAMA_CLOUD_API_KEY || "",
     ollamaUrl: env.OLLAMA_CLOUD_URL || "https://api.ollamacloud.io",
     defaultModel: env.DEFAULT_AI_MODEL || "gemini",
+    gaPropertyId: env.GA_PROPERTY_ID || "",
+    gaClientEmail: env.GA_CLIENT_EMAIL || "",
+    gaPrivateKey: env.GA_PRIVATE_KEY || "",
+    gaMeasurementId: env.PUBLIC_GA_MEASUREMENT_ID || "",
   });
 }
 
@@ -98,6 +102,10 @@ export async function POST(request: Request) {
       OLLAMA_CLOUD_API_KEY: body.ollamaKey || "",
       OLLAMA_CLOUD_URL: body.ollamaUrl || "https://api.ollamacloud.io",
       DEFAULT_AI_MODEL: body.defaultModel || "gemini",
+      GA_PROPERTY_ID: body.gaPropertyId || "",
+      GA_CLIENT_EMAIL: body.gaClientEmail || "",
+      GA_PRIVATE_KEY: body.gaPrivateKey || "",
+      PUBLIC_GA_MEASUREMENT_ID: body.gaMeasurementId || "",
     };
     await writeEnv(updates);
 
@@ -105,6 +113,24 @@ export async function POST(request: Request) {
     Object.entries(updates).forEach(([k, v]) => {
       process.env[k] = v;
     });
+
+    // Also write PUBLIC_GA_MEASUREMENT_ID to the Portfolio .env so Astro picks it up
+    try {
+      const portfolioEnvPath = path.join(process.cwd(), "../PORTFOLIO/.env");
+      let portfolioEnvStr = "";
+      try {
+        portfolioEnvStr = await fs.readFile(portfolioEnvPath, "utf-8");
+      } catch (e) {
+        // file doesn't exist, ignore
+      }
+      const lines = portfolioEnvStr.split(/\r?\n/).filter(line => !line.startsWith("PUBLIC_GA_MEASUREMENT_ID="));
+      if (body.gaMeasurementId) {
+        lines.push(`PUBLIC_GA_MEASUREMENT_ID="${body.gaMeasurementId}"`);
+      }
+      await fs.writeFile(portfolioEnvPath, lines.join("\n") + "\n", "utf-8");
+    } catch (e) {
+      console.error("Failed to write to Portfolio .env", e);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

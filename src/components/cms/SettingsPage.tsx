@@ -200,6 +200,12 @@ export function SettingsPage() {
     "idle" | "loading" | "success" | "error"
   >("idle");
 
+  /* Analytics */
+  const [gaPropertyId, setGaPropertyId] = useState("");
+  const [gaClientEmail, setGaClientEmail] = useState("");
+  const [gaPrivateKey, setGaPrivateKey] = useState("");
+  const [gaMeasurementId, setGaMeasurementId] = useState("");
+
   /* Save */
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -220,6 +226,10 @@ export function SettingsPage() {
           setNvidiaKey(data.nvidiaKey);
           setOllamaKey(data.ollamaKey);
           setOllamaUrl(data.ollamaUrl);
+          setGaPropertyId(data.gaPropertyId);
+          setGaClientEmail(data.gaClientEmail);
+          setGaPrivateKey(data.gaPrivateKey);
+          setGaMeasurementId(data.gaMeasurementId);
           const savedModel = data.defaultModel || "gemini";
           setModel(savedModel);
           useMakeStore.getState().setProvider(savedModel);
@@ -294,6 +304,10 @@ export function SettingsPage() {
           ollamaKey,
           ollamaUrl,
           defaultModel: model,
+          gaPropertyId,
+          gaClientEmail,
+          gaPrivateKey,
+          gaMeasurementId,
         }),
       });
       if (!res.ok) throw new Error("Failed to save settings");
@@ -654,6 +668,61 @@ export function SettingsPage() {
               >
                 <Sparkles size={13} /> {ab.label}
               </LiquidButton>
+            </div>
+          </SectionCard>
+
+          {/* -- Analytics Configuration -- */}
+          <SectionCard
+            icon={<Globe size={16} />}
+            title="Analytics (GA4)"
+          >
+            <div>
+              <Label>GA4 Measurement ID</Label>
+              <PrefixInput
+                icon={<Globe size={14} />}
+                value={gaMeasurementId}
+                onChange={setGaMeasurementId}
+                placeholder="G-XXXXXXXXXX"
+              />
+            </div>
+            <div>
+              <Label>GA4 Property ID</Label>
+              <PrefixInput
+                icon={<Key size={14} />}
+                value={gaPropertyId}
+                onChange={setGaPropertyId}
+                placeholder="e.g. 15367839002"
+              />
+            </div>
+            <div>
+              <Label>Service Account Email</Label>
+              <PrefixInput
+                icon={<Github size={14} />}
+                value={gaClientEmail}
+                onChange={setGaClientEmail}
+                placeholder="service-account@project.iam.gserviceaccount.com"
+              />
+            </div>
+            <div>
+              <Label>Service Account Private Key</Label>
+              <PrefixInput
+                icon={<Key size={14} />}
+                value={gaPrivateKey}
+                onChange={setGaPrivateKey}
+                type="password"
+                placeholder="-----BEGIN PRIVATE KEY-----..."
+              />
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "#52525b",
+                  margin: "6px 0 0",
+                }}
+              >
+                These keys securely fetch your live traffic data from Google Analytics.
+              </p>
             </div>
           </SectionCard>
 
