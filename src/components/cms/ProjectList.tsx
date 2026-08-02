@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Plus, Search, Clock, ExternalLink, ArrowRight } from "lucide-react";
 import type { Project } from "./cms-types";
 
@@ -135,6 +135,34 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
 
       {/* Project list container */}
       <div className="cms-mobile-padding" style={{ padding: "20px 32px" }}>
+        {/* Table header (Desktop only) */}
+        <div
+          className="desktop-only"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 120px 100px 140px 36px",
+            gap: 16,
+            padding: "0 16px 8px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            marginBottom: 4,
+          }}
+        >
+          {["Project", "Category", "Status", "Last Updated", ""].map((h, i) => (
+            <div
+              key={i}
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                color: "#3f3f46",
+                textTransform: "uppercase",
+              }}
+            >
+              {h}
+            </div>
+          ))}
+        </div>
+
         {/* Rows */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map((project, idx) => {
@@ -142,34 +170,45 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
             const cat = CATEGORY_CONFIG[project.category] || { color: "#a1a1aa", bg: "rgba(161,161,170,0.1)" };
 
             return (
-              <div
-                key={project.slug || project.id || idx}
-                onClick={() => onSelectProject(project.slug || project.id)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10,
-                  padding: "14px 16px",
-                  background: "rgba(24,24,27,0.4)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  transition: "all 150ms",
-                }}
-                className="hover:bg-white/[0.05] hover:border-blue-500/30"
-              >
-                {/* Header row: Title + Category + Status */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ flex: 1, minWidth: 200 }}>
-                    <div style={{ color: "#fafafa", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>
+              <React.Fragment key={project.slug || project.id || idx}>
+                {/* Desktop Grid Row */}
+                <div
+                  onClick={() => onSelectProject(project.slug || project.id)}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 120px 100px 140px 36px",
+                    gap: 16,
+                    padding: "12px 16px",
+                    background: "transparent",
+                    border: "1px solid transparent",
+                    borderRadius: 9,
+                    cursor: "pointer",
+                    transition: "background 100ms, border-color 100ms",
+                    alignItems: "center",
+                  }}
+                  className="desktop-only hover:bg-white/[0.03] hover:border-white/[0.07]"
+                >
+                  {/* Title + tagline */}
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: "#fafafa", fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
                       {project.title}
                     </div>
-                    <div style={{ color: "#71717a", fontSize: 12, lineHeight: "17px" }}>
+                    <div
+                      style={{
+                        color: "#52525b",
+                        fontSize: 11,
+                        lineHeight: "16px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {project.tagline}
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {/* Category */}
+                  <div>
                     <span
                       style={{
                         padding: "3px 8px",
@@ -184,36 +223,120 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                     >
                       {project.category}
                     </span>
+                  </div>
 
-                    <span
+                  {/* Status */}
+                  <div>
+                    <div
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 5,
-                        padding: "3px 9px",
+                        padding: "3px 8px",
                         background: status.bg,
                         border: `1px solid ${status.border}`,
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 500,
+                        borderRadius: 20,
+                        fontSize: 10,
                         color: status.color,
                       }}
                     >
-                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: status.color }} />
+                      <span
+                        style={{
+                          width: 5,
+                          height: 5,
+                          borderRadius: "50%",
+                          background: status.color,
+                          display: "inline-block",
+                        }}
+                      />
                       {status.label}
-                    </span>
+                    </div>
+                  </div>
+
+                  {/* Updated */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
+                    <Clock size={11} />
+                    {formatDate(project.updatedAt || project.publishedAt)}
+                  </div>
+
+                  {/* Arrow */}
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <ArrowRight size={14} style={{ color: "#3f3f46" }} />
                   </div>
                 </div>
 
-                {/* Footer row: Date + Arrow */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.03)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
-                    <Clock size={11} />
-                    <span>Updated {formatDate(project.updatedAt || project.publishedAt)}</span>
+                {/* Mobile Flex Card */}
+                <div
+                  onClick={() => onSelectProject(project.slug || project.id)}
+                  style={{
+                    flexDirection: "column",
+                    gap: 10,
+                    padding: "14px 16px",
+                    background: "rgba(24,24,27,0.4)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    transition: "all 150ms",
+                  }}
+                  className="mobile-only flex-card hover:bg-white/[0.05] hover:border-blue-500/30"
+                >
+                  {/* Header row: Title + Category + Status */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ color: "#fafafa", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>
+                        {project.title}
+                      </div>
+                      <div style={{ color: "#71717a", fontSize: 12, lineHeight: "17px" }}>
+                        {project.tagline}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <span
+                        style={{
+                          padding: "3px 8px",
+                          background: cat.bg,
+                          borderRadius: 5,
+                          fontSize: 10,
+                          fontWeight: 600,
+                          letterSpacing: "0.04em",
+                          color: cat.color,
+                          fontFamily: "'JetBrains Mono', monospace",
+                        }}
+                      >
+                        {project.category}
+                      </span>
+
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          padding: "3px 9px",
+                          background: status.bg,
+                          border: `1px solid ${status.border}`,
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 500,
+                          color: status.color,
+                        }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: status.color }} />
+                        {status.label}
+                      </span>
+                    </div>
                   </div>
-                  <ArrowRight size={14} style={{ color: "#3b82f6" }} />
+
+                  {/* Footer row: Date + Arrow */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.03)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
+                      <Clock size={11} />
+                      <span>Updated {formatDate(project.updatedAt || project.publishedAt)}</span>
+                    </div>
+                    <ArrowRight size={14} style={{ color: "#3b82f6" }} />
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             );
           })}
           {filtered.length === 0 && (

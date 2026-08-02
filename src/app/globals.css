@@ -158,8 +158,25 @@
   scrollbar-width: none;
 }
 
+/* Responsive Toggles */
+.mobile-only {
+  display: none !important;
+}
+
 /* Mobile Optimization Rules */
 @media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only.flex-card {
+    display: flex !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
   .cms-app-container {
     flex-direction: column !important;
   }
