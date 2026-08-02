@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  MousePointer2, Box, Move, Palette, Type, ChevronRight, Save, Sparkles, 
+  MousePointer2, Box, Move, Palette, Type, ChevronRight, Save, Sparkles, Send,
   Search, History, Code, Sliders, X, Check, AlertCircle, AlertTriangle, Info, CheckCircle2 
 } from 'lucide-react';
 import { useMakeStore, MakeMessage } from '@/store/makeStore';
@@ -30,6 +30,7 @@ interface RightDockProps {
   handleAccept: () => void;
   handleDiscard: () => Promise<void>;
   runAudit: () => Promise<void>;
+  startGeneration: () => Promise<void>;
 }
 
 function parseColorToHex(val: string): string {
@@ -149,7 +150,7 @@ export function RightDock({
   selectedFigmaElement, setSelectedFigmaElement, 
   saveContentEdits,
   rawCode, setRawCode, handleSaveCode,
-  handleRevert, handleAccept, handleDiscard, runAudit
+  handleRevert, handleAccept, handleDiscard, runAudit, startGeneration
 }: RightDockProps) {
   const { 
     rightOpen, 
@@ -162,7 +163,7 @@ export function RightDock({
     provider, setProvider,
     generationState, messages, ghostDiff,
     isAuditing, auditReport, auditFilter, setAuditFilter,
-    setPromptText
+    promptText, setPromptText
   } = useMakeStore();
 
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -386,6 +387,29 @@ export function RightDock({
               </div>
             </div>
           )}
+
+          {/* Inline Assistant Prompt Bar */}
+          <div className="p-2 border-t border-white/10 bg-[#111113] shrink-0">
+            <div className="flex items-center gap-2 bg-[#18181b] border border-white/10 rounded-lg px-2.5 py-1.5 focus-within:border-violet-500">
+              <input
+                type="text"
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && promptText.trim()) startGeneration(); }}
+                placeholder="Ask Make AI..."
+                className="flex-1 bg-transparent border-none outline-none text-[12px] text-zinc-100 placeholder:text-zinc-500 font-medium"
+                disabled={generationState === "generating"}
+              />
+              <button
+                onClick={startGeneration}
+                disabled={!promptText.trim() || generationState === "generating"}
+                className="w-7 h-7 rounded-md bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:brightness-110 text-white disabled:opacity-40 flex items-center justify-center cursor-pointer transition-all shadow-sm shrink-0"
+                title="Send prompt"
+              >
+                <Send size={12} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -523,10 +547,10 @@ export function RightDock({
 
           {/* Version History List */}
           <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "#2a2a2e transparent" }}>
-            {[...versions].reverse().map((v) => {
+            {[...versions].reverse().map((v, idx) => {
               const isCurrent = v.id === currentVersionId;
               return (
-                <div key={v.id} onClick={() => handleRevert(v)}
+                <div key={`version-${v.id}-${idx}`} onClick={() => handleRevert(v)}
                   className={`rounded-lg border p-2 cursor-pointer transition-all ${isCurrent ? "bg-[#1a1a2e] border-[#3a3a6e]" : "bg-[#111113] border-[#1e1e22] hover:border-[#2a2a2e]"}`}>
                   <div className="flex justify-between items-center mb-0.5">
                     <span className={`text-[11px] font-bold ${isCurrent ? "text-white" : "text-[#aaa]"}`}>v{v.id}</span>

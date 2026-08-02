@@ -406,6 +406,7 @@ export function MakePage({ onBack }: MakePageProps) {
             handleAccept={handleAccept}
             handleDiscard={handleDiscard}
             runAudit={runAudit}
+            startGeneration={startGeneration}
           />
         </div>
 
