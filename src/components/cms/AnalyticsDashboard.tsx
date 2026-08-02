@@ -296,6 +296,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
     unresolvedQueries: number;
     coverageRate: number;
     trafficData: Array<{ day: string; views: number }>;
+    trafficSource?: string;
   } | null>(null);
 
   useEffect(() => {
@@ -417,7 +418,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                     Portfolio Traffic
                   </div>
                   <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, marginTop: 2 }}>
-                    Daily repository views (Last 14 days)
+                    {liveData?.trafficSource === "GA4" ? "Daily website views (Last 30 days)" : "Daily repository views (Last 14 days)"}
                   </div>
                 </div>
                 <div
@@ -434,7 +435,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                   }}
                 >
                   <TrendingUp size={11} />
-                  Live GitHub Data
+                  {liveData?.trafficSource === "GA4" ? "Live Website Data (GA4)" : "Live GitHub Data"}
                 </div>
               </div>
 

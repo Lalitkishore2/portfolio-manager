@@ -54,33 +54,79 @@ export async function GET() {
       resolvedQueries = queries.filter((q: any) => q.status === "resolved").length;
     }
 
-    // 4. Generate dynamic traffic trend based on GitHub API
+    // 4. Generate dynamic traffic trend
     let trafficData: Array<{ day: string; views: number }> = [];
-    try {
-      const token = process.env.CMS_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
-      const repo = process.env.GITHUB_REPO;
-      if (token && repo) {
-        const res = await fetch(`https://api.github.com/repos/${repo}/traffic/views`, {
-          headers: {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": `token ${token}`
+    let trafficSource = "MOCK";
+
+    // A. Try GA4 API first
+    if (process.env.GA_PROPERTY_ID && process.env.GA_CLIENT_EMAIL && process.env.GA_PRIVATE_KEY) {
+      try {
+        const { BetaAnalyticsDataClient } = require('@google-analytics/data');
+        const analyticsDataClient = new BetaAnalyticsDataClient({
+          credentials: {
+            client_email: process.env.GA_CLIENT_EMAIL,
+            private_key: process.env.GA_PRIVATE_KEY.replace(/\\n/g, '\n'),
           },
-          next: { revalidate: 3600 }
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.views && data.views.length > 0) {
-            trafficData = data.views.map((v: any) => ({
-              day: new Date(v.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-              views: v.count
-            }));
-          }
-        } else {
-          console.error("Failed to fetch GitHub traffic:", await res.text());
+
+        const [response] = await analyticsDataClient.runReport({
+          property: `properties/${process.env.GA_PROPERTY_ID}`,
+          dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+          dimensions: [{ name: 'date' }],
+          metrics: [{ name: 'screenPageViews' }],
+        });
+
+        if (response.rows && response.rows.length > 0) {
+          trafficSource = "GA4";
+          // Sort rows by date ascending
+          const sortedRows = response.rows.sort((a: any, b: any) => {
+            return a.dimensionValues[0].value.localeCompare(b.dimensionValues[0].value);
+          });
+          
+          trafficData = sortedRows.map((row: any) => {
+            const rawDate = row.dimensionValues[0].value; // "YYYYMMDD"
+            const y = rawDate.slice(0, 4);
+            const m = rawDate.slice(4, 6);
+            const d = rawDate.slice(6, 8);
+            const dateObj = new Date(`${y}-${m}-${d}T12:00:00Z`);
+            return {
+              day: dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+              views: parseInt(row.metricValues[0].value || '0', 10)
+            };
+          });
         }
+      } catch (gaError) {
+        console.error("GA4 Fetch Error:", gaError);
       }
-    } catch (e) {
-      console.error("Error fetching GitHub traffic", e);
+    }
+
+    // B. Fallback to GitHub Traffic API
+    if (trafficData.length === 0) {
+      try {
+        const token = process.env.CMS_GITHUB_TOKEN || process.env.GITHUB_TOKEN;
+        const repo = process.env.GITHUB_REPO;
+        if (token && repo) {
+          const res = await fetch(`https://api.github.com/repos/${repo}/traffic/views`, {
+            headers: {
+              "Accept": "application/vnd.github.v3+json",
+              "Authorization": `token ${token}`
+            },
+            next: { revalidate: 3600 }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.views && data.views.length > 0) {
+              trafficSource = "GITHUB";
+              trafficData = data.views.map((v: any) => ({
+                day: new Date(v.timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+                views: v.count
+              }));
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching GitHub traffic", e);
+      }
     }
 
     // Fallback if GitHub API fails or returns no data
@@ -107,6 +153,7 @@ export async function GET() {
       totalQueries: unresolvedQueries + resolvedQueries,
       coverageRate: (unresolvedQueries + resolvedQueries) > 0 ? Math.round((resolvedQueries / (unresolvedQueries + resolvedQueries)) * 100) : 100,
       trafficData,
+      trafficSource,
       lastSync: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     });
   } catch (error: any) {
