@@ -52,8 +52,8 @@ interface MakeState {
   setActiveSlideOver: (mode: "audit" | "settings" | null) => void;
   leftTab: "pages" | "layers";
   setLeftTab: (tab: "pages" | "layers") => void;
-  inspectTab: "properties" | "code" | "versions";
-  setInspectTab: (tab: "properties" | "code" | "versions") => void;
+  inspectTab: "properties" | "chat" | "audit" | "code" | "versions";
+  setInspectTab: (tab: "properties" | "chat" | "audit" | "code" | "versions") => void;
   
   // AI State
   generationState: "idle" | "generating" | "result";

@@ -18,11 +18,8 @@ export function SlideOverPanel({ runAudit, iframeRef }: SlideOverPanelProps) {
 
   return (
     <>
-      {/* Backdrop overlay (optional, but helps focus) */}
-      <div className="absolute inset-0 z-40 bg-black/20" onClick={() => setActiveSlideOver(null)} />
-      
-      {/* Panel */}
-      <div className={`absolute top-0 right-0 bottom-[24px] w-[320px] bg-[#111113] border-l border-[#1e1e22] shadow-2xl z-50 flex flex-col transition-transform duration-300 transform ${activeSlideOver ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Non-blocking Side Drawer Panel */}
+      <div className={`absolute top-0 right-[340px] bottom-[24px] w-[320px] bg-[#111113] border-l border-[#1e1e22] shadow-2xl z-30 flex flex-col transition-transform duration-300 transform ${activeSlideOver ? 'translate-x-0' : 'translate-x-full'}`}>
         
         {/* Header */}
         <div className="flex items-center justify-between px-4 h-[48px] border-b border-[#1a1a1e] shrink-0">

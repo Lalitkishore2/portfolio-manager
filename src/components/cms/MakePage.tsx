@@ -5,8 +5,6 @@ import { LeftDock } from "./make/LeftDock";
 import { CanvasZone } from "./make/CanvasZone";
 import { RightDock, FigmaElement } from "./make/RightDock";
 import { AiMakeBar } from "./make/AiMakeBar";
-import { DockedChatPanel } from "./make/DockedChatPanel";
-import { QuickActionsTooltip } from "./make/QuickActionsTooltip";
 import { StatusBar } from "./make/StatusBar";
 import { SlideOverPanel } from "./make/SlideOverPanel";
 
@@ -378,16 +376,6 @@ export function MakePage({ onBack }: MakePageProps) {
         {/* Center Content (Zone 3, 5, 6) */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
           
-          {/* Contextual Floating Quick Actions Bar */}
-          <QuickActionsTooltip
-            selectedNodeId={selectedNodeId}
-            onClearSelection={() => setSelectedNodeId(null)}
-            onRunQuickAction={(actionPrompt) => {
-              setPromptText(actionPrompt);
-              startGeneration();
-            }}
-          />
-
           {/* Zone 3 — Canvas Zone */}
           <CanvasZone 
             iframeRef={iframeRef}
@@ -404,28 +392,24 @@ export function MakePage({ onBack }: MakePageProps) {
 
         </div>
 
-        {/* Zone 4 — Right Dock / Docked Chat */}
+        {/* Zone 4 — Unified Right Inspector Dock */}
         <div className="flex shrink-0 h-full relative">
-          {!chatOpen && (
-            <RightDock 
-              iframeRef={iframeRef}
-              selectedFigmaElement={selectedFigmaElement}
-              setSelectedFigmaElement={setSelectedFigmaElement}
-              saveContentEdits={saveContentEdits}
-              rawCode={rawCode}
-              setRawCode={setRawCode}
-              handleSaveCode={handleSaveCode}
-              handleRevert={handleRevert}
-              setPromptText={setPromptText}
-            />
-          )}
-          <DockedChatPanel 
+          <RightDock 
+            iframeRef={iframeRef}
+            selectedFigmaElement={selectedFigmaElement}
+            setSelectedFigmaElement={setSelectedFigmaElement}
+            saveContentEdits={saveContentEdits}
+            rawCode={rawCode}
+            setRawCode={setRawCode}
+            handleSaveCode={handleSaveCode}
+            handleRevert={handleRevert}
             handleAccept={handleAccept}
             handleDiscard={handleDiscard}
+            runAudit={runAudit}
           />
         </div>
 
-        {/* Slide-over panels for Audit / Settings */}
+        {/* Slide-over panels for Settings */}
         <SlideOverPanel 
           runAudit={runAudit}
           iframeRef={iframeRef}
