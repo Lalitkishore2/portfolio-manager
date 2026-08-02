@@ -83,6 +83,7 @@ export function CMSSidebar({
   return (
     <>
       <aside
+        className="cms-sidebar-aside"
         style={{
           width: 56,
           minWidth: 56,
@@ -98,6 +99,7 @@ export function CMSSidebar({
       >
         {/* -- Header / LK Pop Trigger -- */}
         <div
+          className="cms-sidebar-header"
           style={{
             padding: "16px 0 14px",
             borderBottom: "1px solid #1f1f22",
@@ -135,7 +137,7 @@ export function CMSSidebar({
 
         {/* -- Nav -- */}
         <nav
-          className="no-scrollbar"
+          className="no-scrollbar cms-sidebar-nav"
           style={{
             flex: 1,
             padding: "14px 8px",
@@ -155,6 +157,7 @@ export function CMSSidebar({
 
       {/* -- Bottom: Publish & Logout -- */}
       <div
+        className="cms-sidebar-footer"
         style={{
           padding: "12px 8px 16px",
           borderTop: "1px solid #1f1f22",

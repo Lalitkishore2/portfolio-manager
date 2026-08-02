@@ -160,9 +160,9 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
       </div>
 
       {/* Two-column body */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div className="cms-mobile-stack" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Left: Query list */}
-        <div style={{ width: 380, minWidth: 320, maxWidth: 440, borderRight: "1px solid #1f1f22", display: "flex", flexDirection: "column", overflow: "hidden", flexShrink: 0 }}>
+        <div className="cms-mobile-full" style={{ width: 380, minWidth: 320, maxWidth: 440, borderRight: "1px solid #1f1f22", display: "flex", flexDirection: "column", overflow: "hidden", flexShrink: 0 }}>
           {/* List header */}
           <div style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #1f1f22", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <div style={{ display: "flex", gap: 2, flex: 1 }}>

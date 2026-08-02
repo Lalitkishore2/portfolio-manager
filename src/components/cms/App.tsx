@@ -341,6 +341,7 @@ export default function App({
 
   return (
     <div
+      className="cms-app-container"
       style={{
         width: "100%",
         height: "100vh",
@@ -359,7 +360,7 @@ export default function App({
       />
 
       {/* Main content */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div className="cms-main-viewport" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {renderMain()}
       </div>
 

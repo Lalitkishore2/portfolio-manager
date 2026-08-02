@@ -361,7 +361,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
         boxSizing: "border-box",
       }}
     >
-      <div style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }}>
+      <div className="cms-mobile-padding" style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }}>
         {/* Page title */}
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ color: "var(--cms-text-primary)", fontSize: 22, fontWeight: 700, margin: "0 0 4px", letterSpacing: "-0.01em" }}>

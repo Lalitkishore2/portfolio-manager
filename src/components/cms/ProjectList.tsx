@@ -51,12 +51,14 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
     >
       {/* Page header */}
       <div
+        className="cms-mobile-padding cms-mobile-stack"
         style={{
-          padding: "28px 32px 20px",
+          padding: "24px 32px 18px",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 16,
           background: "#09090b",
           position: "sticky",
           top: 0,
@@ -83,15 +85,16 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {/* Search */}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", flex: 1, minWidth: 160 }}>
             <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#3f3f46" }} />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search projects..."
               style={{
+                width: "100%",
                 padding: "7px 12px 7px 32px",
                 background: "#18181b",
                 border: "1px solid rgba(255,255,255,0.08)",
@@ -100,7 +103,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                 fontSize: 12,
                 fontFamily: "'Inter', sans-serif",
                 outline: "none",
-                width: 200,
+                boxSizing: "border-box",
               }}
             />
           </div>
@@ -121,6 +124,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
               fontFamily: "'Inter', sans-serif",
               cursor: "pointer",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 6px rgba(59,130,246,0.3)",
+              whiteSpace: "nowrap",
             }}
           >
             <Plus size={13} />
@@ -129,37 +133,10 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
         </div>
       </div>
 
-      {/* Project table */}
-      <div style={{ padding: "20px 32px" }}>
-        {/* Table header */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 120px 100px 140px 36px",
-            gap: 16,
-            padding: "0 16px 8px",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-            marginBottom: 4,
-          }}
-        >
-          {["Project", "Category", "Status", "Last Updated", ""].map((h, i) => (
-            <div
-              key={i}
-              style={{
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                color: "#3f3f46",
-                textTransform: "uppercase",
-              }}
-            >
-              {h}
-            </div>
-          ))}
-        </div>
-
+      {/* Project list container */}
+      <div className="cms-mobile-padding" style={{ padding: "20px 32px" }}>
         {/* Rows */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map((project, idx) => {
             const status = STATUS_CONFIG[project.status] || { label: project.status || "Unknown", color: "#a1a1aa", bg: "rgba(161,161,170,0.1)", border: "rgba(161,161,170,0.2)" };
             const cat = CATEGORY_CONFIG[project.category] || { color: "#a1a1aa", bg: "rgba(161,161,170,0.1)" };
@@ -169,101 +146,79 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                 key={project.slug || project.id || idx}
                 onClick={() => onSelectProject(project.slug || project.id)}
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 120px 100px 140px 36px",
-                  gap: 16,
-                  padding: "12px 16px",
-                  background: "transparent",
-                  border: "1px solid transparent",
-                  borderRadius: 9,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  padding: "14px 16px",
+                  background: "rgba(24,24,27,0.4)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 10,
                   cursor: "pointer",
-                  transition: "background 100ms, border-color 100ms",
-                  alignItems: "center",
+                  transition: "all 150ms",
                 }}
-                className="hover:bg-white/[0.03] hover:border-white/[0.07]"
+                className="hover:bg-white/[0.05] hover:border-blue-500/30"
               >
-                {/* Title + tagline */}
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ color: "#fafafa", fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
-                    {project.title}
+                {/* Header row: Title + Category + Status */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ color: "#fafafa", fontSize: 14, fontWeight: 600, marginBottom: 2 }}>
+                      {project.title}
+                    </div>
+                    <div style={{ color: "#71717a", fontSize: 12, lineHeight: "17px" }}>
+                      {project.tagline}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      color: "#52525b",
-                      fontSize: 11,
-                      lineHeight: "16px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {project.tagline}
-                  </div>
-                </div>
 
-                {/* Category */}
-                <div>
-                  <span
-                    style={{
-                      padding: "3px 8px",
-                      background: cat.bg,
-                      borderRadius: 5,
-                      fontSize: 10,
-                      fontWeight: 600,
-                      letterSpacing: "0.04em",
-                      color: cat.color,
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}
-                  >
-                    {project.category}
-                  </span>
-                </div>
-
-                {/* Status */}
-                <div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "3px 8px",
-                      background: status.bg,
-                      border: `1px solid ${status.border}`,
-                      borderRadius: 20,
-                      fontSize: 10,
-                      color: status.color,
-                    }}
-                  >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                     <span
                       style={{
-                        width: 5,
-                        height: 5,
-                        borderRadius: "50%",
-                        background: status.color,
-                        display: "inline-block",
+                        padding: "3px 8px",
+                        background: cat.bg,
+                        borderRadius: 5,
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: "0.04em",
+                        color: cat.color,
+                        fontFamily: "'JetBrains Mono', monospace",
                       }}
-                    />
-                    {status.label}
+                    >
+                      {project.category}
+                    </span>
+
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "3px 9px",
+                        background: status.bg,
+                        border: `1px solid ${status.border}`,
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: status.color,
+                      }}
+                    >
+                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: status.color }} />
+                      {status.label}
+                    </span>
                   </div>
                 </div>
 
-                {/* Updated */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
-                  <Clock size={11} />
-                  {formatDate(project.updatedAt)}
-                </div>
-
-                {/* Arrow */}
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <ArrowRight size={14} style={{ color: "#3f3f46" }} />
+                {/* Footer row: Date + Arrow */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.03)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
+                    <Clock size={11} />
+                    <span>Updated {formatDate(project.updatedAt || project.publishedAt)}</span>
+                  </div>
+                  <ArrowRight size={14} style={{ color: "#3b82f6" }} />
                 </div>
               </div>
             );
           })}
-
           {filtered.length === 0 && (
             <div style={{ padding: "48px 0", textAlign: "center", color: "#52525b", fontSize: 13 }}>
-              No projects match "{search}"
+              No projects match &quot;{search}&quot;
             </div>
           )}
         </div>
