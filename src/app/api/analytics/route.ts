@@ -71,19 +71,23 @@ export async function GET() {
 
         const [response] = await analyticsDataClient.runReport({
           property: `properties/${process.env.GA_PROPERTY_ID}`,
-          dateRanges: [{ startDate: '30daysAgo', endDate: 'today' }],
+          dateRanges: [{ startDate: '365daysAgo', endDate: 'today' }],
           dimensions: [{ name: 'date' }],
           metrics: [{ name: 'screenPageViews' }],
         });
 
+        // Mark as GA4 connected regardless – even 0 rows means API is live
+        trafficSource = "GA4";
+
         if (response.rows && response.rows.length > 0) {
-          trafficSource = "GA4";
           // Sort rows by date ascending
           const sortedRows = response.rows.sort((a: any, b: any) => {
             return a.dimensionValues[0].value.localeCompare(b.dimensionValues[0].value);
           });
           
-          trafficData = sortedRows.map((row: any) => {
+          // Show last 30 days
+          const last30 = sortedRows.slice(-30);
+          trafficData = last30.map((row: any) => {
             const rawDate = row.dimensionValues[0].value; // "YYYYMMDD"
             const y = rawDate.slice(0, 4);
             const m = rawDate.slice(4, 6);
@@ -92,6 +96,17 @@ export async function GET() {
             return {
               day: dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
               views: parseInt(row.metricValues[0].value || '0', 10)
+            };
+          });
+        } else {
+          // GA4 connected but no data yet — show a minimal placeholder with GA4 label
+          const now = new Date();
+          trafficData = Array.from({ length: 14 }, (_, i) => {
+            const d = new Date(now);
+            d.setDate(now.getDate() - (13 - i));
+            return {
+              day: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+              views: 0
             };
           });
         }
