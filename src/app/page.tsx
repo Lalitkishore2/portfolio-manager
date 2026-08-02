@@ -1,59 +1,77 @@
 import { getContentJSON } from "@/lib/github";
 import App from "@/components/cms/App";
 
-export const dynamic = "force-dynamic"; // Always fetch fresh data from GitHub
+export const dynamic = "force-dynamic";
 
 export default async function Page() {
-  // Load all content from GitHub repository via API
   let initialProjects: any[] = [];
+  let initialProjectsSha = "";
+  
   let initialProfile: any = null;
+  let initialProfileSha = "";
+  
   let initialSkills: any[] = [];
+  let initialSkillsSha = "";
+  
   let initialExperience: any[] = [];
+  let initialExperienceSha = "";
+  
   let initialChatbot: any = null;
+  let initialChatbotSha = "";
 
   try {
-    const { data } = await getContentJSON("projects.json");
+    const { data, sha } = await getContentJSON("projects.json");
     const projects = data as any[];
     initialProjects = projects.map((p: any) => ({ ...p, id: p.slug }));
+    initialProjectsSha = sha;
   } catch (e) {
-    console.error("Failed to load projects from GitHub", e);
+    console.error("Failed to load projects", e);
   }
 
   try {
-    const { data } = await getContentJSON("profile.json");
+    const { data, sha } = await getContentJSON("profile.json");
     initialProfile = data;
+    initialProfileSha = sha;
   } catch (e) {
-    console.error("Failed to load profile from GitHub", e);
+    console.error("Failed to load profile", e);
   }
 
   try {
-    const { data } = await getContentJSON("skills.json");
+    const { data, sha } = await getContentJSON("skills.json");
     initialSkills = data as any[];
+    initialSkillsSha = sha;
   } catch (e) {
-    console.error("Failed to load skills from GitHub", e);
+    console.error("Failed to load skills", e);
   }
 
   try {
-    const { data } = await getContentJSON("experience.json");
+    const { data, sha } = await getContentJSON("experience.json");
     initialExperience = data as any[];
+    initialExperienceSha = sha;
   } catch (e) {
-    console.error("Failed to load experience from GitHub", e);
+    console.error("Failed to load experience", e);
   }
 
   try {
-    const { data } = await getContentJSON("chatbot.json");
+    const { data, sha } = await getContentJSON("chatbot.json");
     initialChatbot = data;
+    initialChatbotSha = sha;
   } catch (e) {
-    console.error("Failed to load chatbot from GitHub", e);
+    console.error("Failed to load chatbot", e);
   }
 
   return (
     <App
       initialProjects={initialProjects}
+      initialProjectsSha={initialProjectsSha}
       initialProfile={initialProfile}
+      initialProfileSha={initialProfileSha}
       initialSkills={initialSkills}
+      initialSkillsSha={initialSkillsSha}
       initialExperience={initialExperience}
+      initialExperienceSha={initialExperienceSha}
       initialChatbot={initialChatbot}
+      initialChatbotSha={initialChatbotSha}
     />
   );
 }

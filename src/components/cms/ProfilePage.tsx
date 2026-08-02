@@ -1,5 +1,5 @@
 import { useState, useRef, KeyboardEvent } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   User,
@@ -17,6 +17,9 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
+
+import { FloatingAIPrompt } from "./ai/FloatingAIPrompt";
+import { DiffAcceptor } from "./ai/DiffAcceptor";
 
 /* --- Types ------------------------------------------- */
 interface SocialLink { id: string; platform: "github" | "linkedin" | "mail" | "globe"; url: string; }
@@ -191,6 +194,9 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [showAI, setShowAI] = useState(false);
+  const [aiProposedBio, setAiProposedBio] = useState("");
+  const [enforcingTone, setEnforcingTone] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -246,6 +252,49 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
       toast.error("Failed to save profile changes");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleToneEnforce() {
+    setEnforcingTone(true);
+    try {
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          prompt: "Rewrite to be more professional", 
+          context: bio, 
+          type: "tone" 
+        }),
+      });
+      
+      if (!response.ok) throw new Error("Failed to generate");
+      
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let completeText = "";
+      
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('0:')) {
+              try {
+                completeText += JSON.parse(line.substring(2));
+              } catch (e) {}
+            }
+          }
+        }
+      }
+      setAiProposedBio(completeText);
+      setShowDiff(true);
+    } catch (e) {
+      toast.error("AI Generation Failed");
+    } finally {
+      setEnforcingTone(false);
     }
   }
 
@@ -326,15 +375,35 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
             <div style={S.sectionLine} />
           </div>
           <div style={{ position: "relative" }}>
-            <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} style={{ ...S.textarea, minHeight: 160, paddingRight: 60 }} placeholder="Write your bio..." />
-            <button onClick={() => setShowAI(!showAI)} style={{ position: "absolute", top: 8, right: 8, background: "rgba(39,39,42,0.8)", border: "1px solid rgba(63,63,70,0.5)", borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 600, color: "#a855f7", cursor: "pointer", backdropFilter: "blur(8px)", fontFamily: "'Inter', sans-serif" }}>
-              <Sparkles size={12} /> AI
-            </button>
-            <AnimatePresence>
-              {showAI && <AIDrawerWidget onApply={setBio} onClose={() => setShowAI(false)} />}
-            </AnimatePresence>
+            {showDiff ? (
+              <DiffAcceptor 
+                originalText={bio}
+                proposedText={aiProposedBio}
+                onAccept={() => {
+                  setBio(aiProposedBio);
+                  setShowDiff(false);
+                  toast.success("AI Bio Accepted");
+                }}
+                onReject={() => setShowDiff(false)}
+              />
+            ) : (
+              <>
+                <FloatingAIPrompt onApply={(text) => {
+                  setBio(text);
+                  toast.success("AI edit applied!");
+                }} />
+                <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} style={{ ...S.textarea, minHeight: 160, paddingRight: 60 }} placeholder="Write your bio..." />
+                <button 
+                  onClick={handleToneEnforce} 
+                  disabled={enforcingTone}
+                  style={{ position: "absolute", top: 8, right: 8, background: "rgba(39,39,42,0.8)", border: "1px solid rgba(63,63,70,0.5)", borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 600, color: enforcingTone ? "#a1a1aa" : "#a855f7", cursor: enforcingTone ? "not-allowed" : "pointer", backdropFilter: "blur(8px)", fontFamily: "'Inter', sans-serif" }}
+                >
+                  <Sparkles size={12} /> {enforcingTone ? "Generating..." : "Enforce Tone"}
+                </button>
+              </>
+            )}
           </div>
-          <p style={{ fontSize: 11, color: "#52525b", marginTop: 8 }}>This appears in the About section of your portfolio</p>
+          <p style={{ fontSize: 11, color: "#52525b", marginTop: 8 }}>This appears in the About section of your portfolio. Select text for inline AI actions.</p>
 
           {/* SECTION 3 — Education */}
           <div style={S.sectionHeader}>

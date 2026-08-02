@@ -15,13 +15,7 @@ interface QueryEntry {
   likelyCategory: string;
 }
 
-const INITIAL_MOCK_QUERIES: QueryEntry[] = [
-  { id: "q1", question: "What microcontroller did you use in SmartFlow IV?", country: "IN", time: "12h ago", exact: "Jun 15 2026, 02:31 UTC", status: "unreviewed", likelyCategory: "smartflow" },
-  { id: "q2", question: "How did you achieve 94% anomaly detection accuracy in AquaDot?", country: "US", time: "1d ago", exact: "Jun 14 2026, 14:10 UTC", status: "unreviewed", likelyCategory: "aquadot" },
-  { id: "q3", question: "Are you open to full-time roles outside India?", country: "DE", time: "2d ago", exact: "Jun 13 2026, 09:55 UTC", status: "unreviewed", likelyCategory: "general" },
-  { id: "q4", question: "What dataset did you use to train LADA AI?", country: "US", time: "3d ago", exact: "Jun 12 2026, 17:43 UTC", status: "in-review", likelyCategory: "lada" },
-  { id: "q5", question: "How does CareerSight handle privacy of uploaded resumes?", country: "CA", time: "4d ago", exact: "Jun 11 2026, 11:22 UTC", status: "unreviewed", likelyCategory: "careersight" },
-];
+// Removed hardcoded mock queries, loading from API instead
 
 const PROJECTS_MAP: Record<string, string> = {
   aquadot: "AquaDot",
@@ -51,7 +45,7 @@ const STATUS_DOT: Record<QueryStatus, { color: string; label: string }> = {
 };
 
 export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any; onSave: (data: any) => Promise<void> }) {
-  const [queries, setQueries] = useState<QueryEntry[]>(INITIAL_MOCK_QUERIES);
+  const [queries, setQueries] = useState<QueryEntry[]>([]);
   const [selected, setSelected] = useState<QueryEntry | null>(null);
   const [filter, setFilter] = useState<"all" | "unreviewed" | "resolved">("all");
   const [search, setSearch] = useState("");
@@ -60,6 +54,21 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
   const [contentVal, setContentVal] = useState("");
   const [committing, setCommitting] = useState(false);
   const [committed, setCommitted] = useState(false);
+
+  useEffect(() => {
+    async function fetchQueries() {
+      try {
+        const res = await fetch("/api/queries");
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          setQueries(json.data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch queries", e);
+      }
+    }
+    fetchQueries();
+  }, []);
 
   useEffect(() => {
     if (selected) {

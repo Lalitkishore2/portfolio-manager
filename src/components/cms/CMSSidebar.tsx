@@ -7,7 +7,6 @@ import {
   Bot,
   Settings,
   Github,
-  ChevronRight,
   Sparkles,
   Loader2,
   Check,
@@ -23,6 +22,7 @@ export type CMSView =
   | "analytics"
   | "chatbot"
   | "make"
+  | "tokens"
   | "settings";
 
 interface NavItem {
@@ -45,6 +45,7 @@ const AI_NAV: NavItem[] = [
 ];
 
 const SYSTEM_NAV: NavItem[] = [
+  { id: "tokens",   label: "Design Tokens", icon: Settings },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -71,8 +72,8 @@ export function CMSSidebar({
   return (
     <aside
       style={{
-        width: 240,
-        minWidth: 240,
+        width: 56,
+        minWidth: 56,
         height: "100%",
         background: "#111113",
         borderRight: "1px solid #27272a",
@@ -85,70 +86,35 @@ export function CMSSidebar({
       {/* -- Header -- */}
       <div
         style={{
-          padding: "16px 16px 14px",
+          padding: "16px 0 14px",
           borderBottom: "1px solid #1f1f22",
           flexShrink: 0,
+          display: "flex",
+          justifyContent: "center",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Avatar */}
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 11,
-              fontWeight: 600,
-              color: "#fff",
-              flexShrink: 0,
-              letterSpacing: "0.02em",
-            }}
-          >
-            LK
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#fafafa",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase" as const,
-                lineHeight: "14px",
-                whiteSpace: "nowrap" as const,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              LK Portfolio CMS
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                marginTop: 3,
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "#22c55e",
-                  display: "inline-block",
-                  animation: "pulse-green 2s ease-in-out infinite",
-                }}
-              />
-              <span style={{ fontSize: 10, color: "#52525b" }}>
-                Live on GitHub Pages
-              </span>
-            </div>
-          </div>
+        <div
+          title="LK Portfolio CMS"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#fff",
+            flexShrink: 0,
+            letterSpacing: "0.02em",
+            cursor: "pointer",
+            transition: "transform 200ms ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          LK
         </div>
       </div>
 
@@ -156,50 +122,42 @@ export function CMSSidebar({
       <nav
         style={{
           flex: 1,
-          padding: "14px 10px",
+          padding: "14px 8px",
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: 22,
+          gap: 16,
+          alignItems: "center",
         }}
       >
-        <NavSection
-          label="Content"
-          items={CONTENT_NAV}
-          isActive={isActive}
-          onNavigate={onNavigate}
-        />
-        <NavSection
-          label="AI & Analytics"
-          items={AI_NAV}
-          isActive={isActive}
-          onNavigate={onNavigate}
-        />
-        <NavSection
-          label="System"
-          items={SYSTEM_NAV}
-          isActive={isActive}
-          onNavigate={onNavigate}
-        />
+        <NavSection items={CONTENT_NAV} isActive={isActive} onNavigate={onNavigate} />
+        <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
+        <NavSection items={AI_NAV} isActive={isActive} onNavigate={onNavigate} />
+        <div style={{ width: "24px", height: "1px", background: "#27272a" }} />
+        <NavSection items={SYSTEM_NAV} isActive={isActive} onNavigate={onNavigate} />
       </nav>
 
-      {/* -- Bottom: Publish -- */}
+      {/* -- Bottom: Publish & Logout -- */}
       <div
         style={{
-          padding: "12px 12px 16px",
+          padding: "12px 8px 16px",
           borderTop: "1px solid #1f1f22",
           flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          alignItems: "center",
         }}
       >
         <button
           onClick={onPublish}
           disabled={publishing}
           style={{
-            width: "100%",
+            width: 36,
+            height: 36,
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: "9px 14px",
+            justifyContent: "center",
             background: published
               ? "rgba(20,83,45,0.4)"
               : publishing
@@ -212,42 +170,24 @@ export function CMSSidebar({
               : "1px solid #27272a",
             borderRadius: 8,
             color: published ? "#4ade80" : publishing ? "#60a5fa" : "#d4d4d8",
-            fontSize: 13,
-            fontWeight: 500,
-            fontFamily: "'Inter', sans-serif",
             cursor: publishing ? "not-allowed" : "pointer",
             transition: "all 250ms",
           }}
           className="publish-btn"
+          title={published ? "Published!" : publishing ? "Publishing..." : "Publish to GitHub"}
         >
-          <Github size={15} style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, textAlign: "left" as const }}>
-            {published
-              ? "Published!"
-              : publishing
-              ? "Publishing..."
-              : "Publish to GitHub"}
-          </span>
-          {publishing && (
+          {publishing ? (
             <Loader2
-              size={13}
+              size={16}
               color="#60a5fa"
-              style={{ animation: "spin 1s linear infinite", flexShrink: 0 }}
+              style={{ animation: "spin 1s linear infinite" }}
             />
-          )}
-          {published && (
-            <Check size={13} color="#4ade80" style={{ flexShrink: 0 }} />
+          ) : published ? (
+            <Check size={16} color="#4ade80" />
+          ) : (
+            <Github size={16} />
           )}
         </button>
-
-        <div style={{ marginTop: 8, paddingLeft: 2 }}>
-          <div style={{ fontSize: 10, color: "#3f3f46" }}>
-            Last published: Jun 14, 2026
-          </div>
-          <div style={{ fontSize: 10, color: "#3f3f46", marginTop: 1 }}>
-            3 files changed
-          </div>
-        </div>
 
         <button
           onClick={async () => {
@@ -261,19 +201,15 @@ export function CMSSidebar({
             }
           }}
           style={{
-            width: "100%",
-            marginTop: 14,
+            width: 36,
+            height: 36,
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: "8px 12px",
+            justifyContent: "center",
             background: "transparent",
             border: "1px solid rgba(239, 68, 68, 0.2)",
             borderRadius: 8,
             color: "#f87171",
-            fontSize: 13,
-            fontWeight: 500,
-            fontFamily: "'Inter', sans-serif",
             cursor: "pointer",
             transition: "all 120ms",
           }}
@@ -285,15 +221,14 @@ export function CMSSidebar({
             (e.currentTarget as HTMLButtonElement).style.background = "transparent";
             (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(239, 68, 68, 0.2)";
           }}
+          title="Log Out"
         >
-          <LogOut size={14} style={{ flexShrink: 0 }} />
-          <span style={{ flex: 1, textAlign: "left" }}>Log Out</span>
+          <LogOut size={15} />
         </button>
       </div>
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes pulse-green { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .publish-btn:not(:disabled):hover { background: #1c1c1f !important; border-color: rgba(59,130,246,0.3) !important; }
       `}</style>
     </aside>
@@ -302,92 +237,62 @@ export function CMSSidebar({
 
 /* --- NavSection -------------------------------------------------- */
 function NavSection({
-  label,
   items,
   isActive,
   onNavigate,
 }: {
-  label: string;
   items: NavItem[];
   isActive: (id: CMSView) => boolean;
   onNavigate: (view: CMSView) => void;
 }) {
   return (
-    <div>
-      {/* Section header */}
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: "0.09em",
-          color: "#3f3f46",
-          textTransform: "uppercase" as const,
-          padding: "0 8px",
-          marginBottom: 4,
-        }}
-      >
-        {label}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-        {items.map(({ id, label: itemLabel, icon: Icon }) => {
-          const active = isActive(id);
-          return (
-            <button
-              key={id}
-              onClick={() => onNavigate(id)}
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%" }}>
+      {items.map(({ id, label: itemLabel, icon: Icon }) => {
+        const active = isActive(id);
+        return (
+          <button
+            key={id}
+            onClick={() => onNavigate(id)}
+            style={{
+              width: 40,
+              height: 40,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto",
+              background: active ? "#1d3461" : "transparent",
+              border: active
+                ? "1px solid rgba(59,130,246,0.2)"
+                : "1px solid transparent",
+              borderRadius: 8,
+              color: active ? "#60a5fa" : "#71717a",
+              cursor: "pointer",
+              transition: "all 120ms",
+            }}
+            title={itemLabel}
+            onMouseEnter={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLButtonElement).style.background = "#1c1c1f";
+                (e.currentTarget as HTMLButtonElement).style.color = "#e4e4e7";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!active) {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color = "#71717a";
+              }
+            }}
+          >
+            <Icon
+              size={18}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 9,
-                padding: "7px 10px",
-                background: active ? "#1d3461" : "transparent",
-                border: active
-                  ? "1px solid rgba(59,130,246,0.2)"
-                  : "1px solid transparent",
-                borderRadius: 8,
-                color: active ? "#60a5fa" : "#71717a",
-                cursor: "pointer",
-                fontSize: 13,
-                fontFamily: "'Inter', sans-serif",
-                fontWeight: active ? 500 : 400,
-                textAlign: "left" as const,
-                width: "100%",
-                transition: "background 120ms, color 120ms, border-color 120ms",
+                color: active ? "#60a5fa" : "#52525b",
+                transition: "all 300ms",
               }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "#1c1c1f";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#e4e4e7";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#71717a";
-                }
-              }}
-            >
-              <Icon
-                size={15}
-                style={{
-                  flexShrink: 0,
-                  color: active ? "#60a5fa" : "#52525b",
-                }}
-              />
-              <span style={{ flex: 1 }}>{itemLabel}</span>
-              {active && (
-                <ChevronRight
-                  size={12}
-                  style={{ color: "#52525b", flexShrink: 0 }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }

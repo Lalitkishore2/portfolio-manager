@@ -159,14 +159,14 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
 
         {/* Rows */}
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {filtered.map((project) => {
+          {filtered.map((project, idx) => {
             const status = STATUS_CONFIG[project.status] || { label: project.status || "Unknown", color: "#a1a1aa", bg: "rgba(161,161,170,0.1)", border: "rgba(161,161,170,0.2)" };
             const cat = CATEGORY_CONFIG[project.category] || { color: "#a1a1aa", bg: "rgba(161,161,170,0.1)" };
 
             return (
               <div
-                key={project.id}
-                onClick={() => onSelectProject(project.id)}
+                key={project.slug || project.id || idx}
+                onClick={() => onSelectProject(project.slug || project.id)}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 120px 100px 140px 36px",

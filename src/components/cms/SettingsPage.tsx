@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import {
   Github,
   Key,
@@ -170,6 +170,8 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { useMakeStore } from "@/store/makeStore";
+
 /* --- SettingsPage ----------------------------------------------- */
 import { useEffect } from "react";
 
@@ -218,6 +220,9 @@ export function SettingsPage() {
           setNvidiaKey(data.nvidiaKey);
           setOllamaKey(data.ollamaKey);
           setOllamaUrl(data.ollamaUrl);
+          const savedModel = data.defaultModel || "gemini";
+          setModel(savedModel);
+          useMakeStore.getState().setProvider(savedModel);
         }
       } catch (e) {
         console.error("Failed to load settings", e);
@@ -235,7 +240,7 @@ export function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           repo, token, branch, previewUrl,
-          openrouterKey: apiKey, groqKey, geminiKey, nvidiaKey, ollamaKey, ollamaUrl,
+          openrouterKey: apiKey, groqKey, geminiKey, nvidiaKey, ollamaKey, ollamaUrl, defaultModel: model,
         }),
       });
       // Then test the connection
@@ -288,9 +293,11 @@ export function SettingsPage() {
           nvidiaKey,
           ollamaKey,
           ollamaUrl,
+          defaultModel: model,
         }),
       });
       if (!res.ok) throw new Error("Failed to save settings");
+      useMakeStore.getState().setProvider(model);
       setSaved(true);
       toast.success("Settings saved successfully");
       setTimeout(() => setSaved(false), 2500);

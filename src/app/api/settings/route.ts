@@ -62,6 +62,7 @@ export async function GET() {
     "GITHUB_REPO", "GITHUB_TOKEN", "GITHUB_BRANCH", "ASTRO_PREVIEW_URL",
     "OPENROUTER_API_KEY", "GROQ_API_KEY", "GEMINI_API_KEY",
     "NVIDIA_API_KEY", "OLLAMA_CLOUD_API_KEY", "OLLAMA_CLOUD_URL",
+    "DEFAULT_AI_MODEL",
   ];
   processKeys.forEach((key) => {
     if (process.env[key]) env[key] = process.env[key]!;
@@ -78,6 +79,7 @@ export async function GET() {
     nvidiaKey: env.NVIDIA_API_KEY || "",
     ollamaKey: env.OLLAMA_CLOUD_API_KEY || "",
     ollamaUrl: env.OLLAMA_CLOUD_URL || "https://api.ollamacloud.io",
+    defaultModel: env.DEFAULT_AI_MODEL || "gemini",
   });
 }
 
@@ -95,6 +97,7 @@ export async function POST(request: Request) {
       NVIDIA_API_KEY: body.nvidiaKey || "",
       OLLAMA_CLOUD_API_KEY: body.ollamaKey || "",
       OLLAMA_CLOUD_URL: body.ollamaUrl || "https://api.ollamacloud.io",
+      DEFAULT_AI_MODEL: body.defaultModel || "gemini",
     };
     await writeEnv(updates);
 

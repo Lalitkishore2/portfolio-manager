@@ -9,11 +9,18 @@
 const GITHUB_API = "https://api.github.com";
 
 function getConfig() {
-  return {
-    repo: process.env.GITHUB_REPO || "Lalitkishore2/portfolio",
-    token: process.env.GITHUB_TOKEN || "",
-    branch: process.env.GITHUB_BRANCH || "main",
-  };
+  const repo = process.env.GITHUB_REPO?.trim();
+  const token = (process.env.CMS_GITHUB_TOKEN || process.env.GITHUB_TOKEN)?.trim();
+  const branch = process.env.GITHUB_BRANCH?.trim() || "main";
+
+  if (!repo) {
+    throw new Error("GITHUB_REPO environment variable is missing.");
+  }
+  if (!token) {
+    throw new Error("CMS_GITHUB_TOKEN or GITHUB_TOKEN environment variable is missing.");
+  }
+
+  return { repo, token, branch };
 }
 
 function headers() {
@@ -39,7 +46,11 @@ export async function getFile(
   const { repo, branch } = getConfig();
   const url = `${GITHUB_API}/repos/${repo}/contents/${filePath}?ref=${branch}`;
 
-  const res = await fetch(url, { headers: headers(), cache: "no-store" });
+  const h = headers();
+  console.log(`[DEBUG] Fetching ${url}`);
+  console.log(`[DEBUG] Auth header length: ${h.Authorization?.length}, first 10 chars: ${h.Authorization?.substring(0, 10)}`);
+
+  const res = await fetch(url, { headers: h, cache: "no-store" });
   if (!res.ok) {
     const body = await res.text();
     throw new Error(
@@ -63,13 +74,14 @@ export async function updateFile(
   const { repo, branch } = getConfig();
   const url = `${GITHUB_API}/repos/${repo}/contents/${filePath}`;
 
-  // If no sha provided, try to get the current one (for updates)
+  // If no sha provided, verify the file doesn't already exist to prevent blind overwrites
   let currentSha = sha;
   if (!currentSha) {
     try {
-      const existing = await getFile(filePath);
-      currentSha = existing.sha;
-    } catch {
+      await getFile(filePath);
+      throw new Error(`409 Conflict: ${filePath} already exists. You must provide a sha to update it.`);
+    } catch (err: any) {
+      if (err.message.includes("409 Conflict")) throw err;
       // File doesn't exist yet — that's fine for creation
     }
   }
@@ -119,12 +131,13 @@ export async function getContentJSON<T = unknown>(
 export async function saveContentJSON(
   filename: string,
   data: unknown,
-  commitMessage?: string
+  commitMessage?: string,
+  sha?: string
 ): Promise<{ sha: string; commitSha: string }> {
   const message =
     commitMessage || `cms: update content/${filename}`;
   const content = JSON.stringify(data, null, 2) + "\n";
-  return updateFile(`content/${filename}`, content, message);
+  return updateFile(`content/${filename}`, content, message, sha);
 }
 
 /* ------------------------------------------------------------------ */

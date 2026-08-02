@@ -1,7 +1,9 @@
 import { useState, KeyboardEvent } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { GripVertical, Trash2, Plus, Save, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { FigmaCard, FigmaCardHeader } from "./figma/FigmaCard";
+import { FigmaInput } from "./figma/FigmaInput";
 
 /* --- Types ------------------------------------------------------- */
 interface SkillCategory {
@@ -11,21 +13,6 @@ interface SkillCategory {
   rotation?: number;
   accentColor?: string;
 }
-
-/* --- Shared style atoms ------------------------------------------- */
-const inp: React.CSSProperties = {
-  background: "transparent",
-  border: "none",
-  borderBottom: "1px solid #27272a",
-  outline: "none",
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#e4e4e7",
-  fontFamily: "'Inter', sans-serif",
-  width: "100%",
-  paddingBottom: 4,
-  transition: "border-color 200ms",
-};
 
 /* --- TagInput ----------------------------------------------------- */
 function TagInput({
@@ -48,19 +35,7 @@ function TagInput({
   }
 
   return (
-    <div
-      style={{
-        background: "rgba(24,24,27,0.5)",
-        border: "1px solid #27272a",
-        borderRadius: 12,
-        padding: "10px 14px",
-        display: "flex",
-        flexWrap: "wrap" as const,
-        gap: 8,
-        alignItems: "center",
-        minHeight: 44,
-      }}
-    >
+    <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-3 flex flex-wrap gap-2 items-center min-h-[44px]">
       <AnimatePresence>
         {tags.map((t) => (
           <motion.span
@@ -69,31 +44,12 @@ function TagInput({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ duration: 0.12 }}
-            style={{
-              background: "#27272a",
-              border: "1px solid rgba(63,63,70,0.5)",
-              borderRadius: 6,
-              padding: "4px 10px",
-              fontSize: 11,
-              fontFamily: "JetBrains Mono, monospace",
-              color: "#d4d4d8",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
+            className="bg-zinc-800 border border-white/10 rounded-md px-2.5 py-1 text-[11px] font-mono text-zinc-300 flex items-center gap-1.5"
           >
             {t}
             <button
               onClick={() => onChange(tags.filter((x) => x !== t))}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#52525b",
-                padding: 0,
-                display: "flex",
-                lineHeight: 1,
-              }}
+              className="text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer p-0 flex leading-none bg-transparent border-none"
             >
               <X size={10} />
             </button>
@@ -105,15 +61,7 @@ function TagInput({
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKey}
         placeholder={tags.length === 0 ? "Type + press Enter to add..." : ""}
-        style={{
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          fontSize: 12,
-          color: "#d4d4d8",
-          fontFamily: "'Inter', sans-serif",
-          minWidth: 120,
-        }}
+        className="bg-transparent border-none outline-none text-[12px] text-zinc-300 font-sans min-w-[120px]"
       />
     </div>
   );
@@ -130,63 +78,36 @@ function CategoryCard({
   onDelete: () => void;
 }) {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.15 }}
-      style={{
-        background: "rgba(24,24,27,0.6)",
-        border: "1px solid #27272a",
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 14,
-      }}
-    >
-      {/* Header row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <GripVertical
-          size={16}
-          color="#3f3f46"
-          style={{ cursor: "grab", flexShrink: 0 }}
-        />
-        <input
-          value={cat.name}
-          onChange={(e) => onChange({ ...cat, name: e.target.value })}
-          placeholder="Category name"
-          style={inp}
-        />
-        <button
-          onClick={onDelete}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#52525b",
-            display: "flex",
-            padding: 4,
-            flexShrink: 0,
-            transition: "color 150ms",
-          }}
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
+    <FigmaCard className="mb-4 overflow-visible">
+      <FigmaCardHeader className="flex flex-row items-center justify-between py-4 pb-2">
+        <div className="flex items-center gap-3 w-full">
+          <GripVertical size={16} className="text-zinc-500 cursor-grab shrink-0" />
+          <div className="flex-1 max-w-[200px]">
+            <input
+              value={cat.name}
+              onChange={(e) => onChange({ ...cat, name: e.target.value })}
+              placeholder="Category name"
+              className="bg-transparent border-none border-b border-transparent focus:border-blue-500/50 outline-none text-[13px] font-semibold text-zinc-200 w-full pb-1 transition-colors"
+            />
+          </div>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={onDelete}
+              className="p-1 text-zinc-500 hover:text-rose-500 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      </FigmaCardHeader>
 
-      {/* Skills tag input */}
-      <TagInput
-        tags={cat.skills}
-        onChange={(skills) => onChange({ ...cat, skills })}
-      />
-    </motion.div>
+      <div className="px-6 pb-6 pt-2">
+        <TagInput
+          tags={cat.skills}
+          onChange={(skills) => onChange({ ...cat, skills })}
+        />
+      </div>
+    </FigmaCard>
   );
 }
 
@@ -261,20 +182,20 @@ export function SkillsPage({ initialData, onSave }: { initialData: any[]; onSave
 
   async function save() {
     setSaving(true);
-    const ACCENTS = ["#C6FF00", "#FF3B30", "#2D5BFF", "#FF006E", "#00E5FF", "#FF9500"];
-    const payload = categories.map((cat, idx) => ({
-      title: cat.name,
-      skills: cat.skills,
-      rotation: typeof cat.rotation === "number" ? cat.rotation : parseFloat((Math.random() * 2.4 - 1.2).toFixed(1)),
-      accentColor: cat.accentColor || ACCENTS[idx % ACCENTS.length]
-    }));
-
     try {
-      await onSave(payload);
+      // Clean up for saving
+      const clean = categories.map((c, i) => ({
+        title: c.name,
+        skills: c.skills,
+        rotation: (i % 3) * 2 - 2, // arbitrary aesthetic rotation
+        accentColor: ["#60a5fa", "#34d399", "#c084fc", "#f87171", "#fbbf24"][
+          i % 5
+        ],
+      }));
+      await onSave(clean);
       setSaved(true);
       setDirty(false);
-      toast.success("Skills saved to skills.json");
-      setTimeout(() => setSaved(false), 2500);
+      toast.success("Skills saved successfully");
     } catch (e) {
       toast.error("Failed to save skills");
     } finally {
@@ -282,166 +203,70 @@ export function SkillsPage({ initialData, onSave }: { initialData: any[]; onSave
     }
   }
 
-  const totalSkills = categories.reduce((acc, c) => acc + c.skills.length, 0);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        overflow: "hidden",
-        background: "#09090b",
-        fontFamily: "'Inter', sans-serif",
-      }}
+      className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950 font-sans"
     >
       {/* Top Bar */}
-      <div
-        style={{
-          padding: "18px 32px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: "1px solid #1f1f22",
-          flexShrink: 0,
-        }}
-      >
+      <div className="px-8 py-5 flex items-center justify-between border-b border-white/5 shrink-0">
         <div>
-          <h1
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              color: "#fafafa",
-              margin: "0 0 4px",
-            }}
-          >
-            Skills
+          <h1 className="text-xl font-semibold text-zinc-50 mb-1">
+            Skills & Stack
           </h1>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 12,
-              color: "#71717a",
-            }}
-          >
-            <span>
-              {totalSkills} skills across {categories.length} categories in
-            </span>
-            <span
-              style={{
-                background: "#18181b",
-                border: "1px solid #27272a",
-                borderRadius: 4,
-                padding: "2px 8px",
-                fontFamily: "JetBrains Mono, monospace",
-                fontSize: 11,
-                color: "#a1a1aa",
-              }}
-            >
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
+            <span>{categories.length} categories in</span>
+            <span className="bg-zinc-900 border border-white/10 rounded px-2 py-0.5 font-mono text-[11px] text-zinc-300">
               skills.json
             </span>
           </div>
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {dirty && (
-            <button
-              onClick={() => {
-                setCategories(INITIAL);
-                setDirty(false);
-              }}
-              style={{
-                padding: "7px 14px",
-                background: "transparent",
-                border: "1px solid #27272a",
-                borderRadius: 8,
-                fontSize: 12,
-                color: "#71717a",
-                cursor: "pointer",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              Discard Changes
-            </button>
+        <button
+          onClick={save}
+          disabled={saving || (!dirty && categories.length > 0)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium text-white transition-all shadow-[0_0_16px_rgba(59,130,246,0.2)] ${
+            saved
+              ? "bg-emerald-600 hover:bg-emerald-700"
+              : !dirty && categories.length > 0
+              ? "bg-zinc-800 text-zinc-400 cursor-not-allowed shadow-none"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          {saved ? (
+            <>
+              <Check size={14} /> Saved
+            </>
+          ) : saving ? (
+            "Saving..."
+          ) : (
+            <>
+              <Save size={14} /> Save Changes
+            </>
           )}
-          <button
-            onClick={save}
-            disabled={saving}
-            style={{
-              background: saved ? "#166534" : "#3b82f6",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 16px",
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#fff",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              boxShadow: "0 0 16px rgba(59,130,246,0.3)",
-              fontFamily: "'Inter', sans-serif",
-              transition: "all 200ms",
-            }}
-          >
-            {saved ? (
-              <>
-                <Check size={13} /> Saved
-              </>
-            ) : saving ? (
-              "Saving..."
-            ) : (
-              <>
-                <Save size={13} /> Save Changes
-              </>
-            )}
-          </button>
-        </div>
+        </button>
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <AnimatePresence mode="popLayout">
-            {categories.map((cat) => (
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-3xl mx-auto pb-12">
+          <AnimatePresence>
+            {categories.map((c) => (
               <CategoryCard
-                key={cat.id}
-                cat={cat}
-                onChange={(updated) => update(cat.id, updated)}
-                onDelete={() => remove(cat.id)}
+                key={c.id}
+                cat={c}
+                onChange={(u) => update(c.id, u)}
+                onDelete={() => remove(c.id)}
               />
             ))}
           </AnimatePresence>
-
           <button
             onClick={add}
-            style={{
-              width: "100%",
-              border: "1px dashed #27272a",
-              borderRadius: 12,
-              padding: "12px 0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              fontSize: 13,
-              color: "#52525b",
-              cursor: "pointer",
-              background: "none",
-              fontFamily: "'Inter', sans-serif",
-              transition: "all 200ms",
-            }}
+            className="w-full border border-dashed border-white/10 rounded-xl py-4 flex items-center justify-center gap-2 text-[13px] text-zinc-400 hover:text-zinc-200 hover:border-white/20 transition-all bg-transparent cursor-pointer"
           >
-            <Plus size={15} /> Add Category
+            <Plus size={16} /> Add Skill Category
           </button>
-
-          <div style={{ height: 40 }} />
         </div>
       </div>
     </motion.div>

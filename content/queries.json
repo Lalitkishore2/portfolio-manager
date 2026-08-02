@@ -1,0 +1,7 @@
+[
+  { "id": "q1", "question": "What microcontroller did you use in SmartFlow IV?", "country": "IN", "time": "12h ago", "exact": "Jun 15 2026, 02:31 UTC", "status": "unreviewed", "likelyCategory": "smartflow" },
+  { "id": "q2", "question": "How did you achieve 94% anomaly detection accuracy in AquaDot?", "country": "US", "time": "1d ago", "exact": "Jun 14 2026, 14:10 UTC", "status": "unreviewed", "likelyCategory": "aquadot" },
+  { "id": "q3", "question": "Are you open to full-time roles outside India?", "country": "DE", "time": "2d ago", "exact": "Jun 13 2026, 09:55 UTC", "status": "unreviewed", "likelyCategory": "general" },
+  { "id": "q4", "question": "What dataset did you use to train LADA AI?", "country": "US", "time": "3d ago", "exact": "Jun 12 2026, 17:43 UTC", "status": "in-review", "likelyCategory": "lada" },
+  { "id": "q5", "question": "How does CareerSight handle privacy of uploaded resumes?", "country": "CA", "time": "4d ago", "exact": "Jun 11 2026, 11:22 UTC", "status": "unreviewed", "likelyCategory": "careersight" }
+]

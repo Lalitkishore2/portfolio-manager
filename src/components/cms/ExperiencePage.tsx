@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  GripVertical, ChevronDown, ChevronUp, Trash2, Plus, Save, Check, Sparkles, ArrowRight, X,
+  GripVertical, ChevronDown, ChevronUp, Trash2, Plus, Save, Check, ArrowRight, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FigmaInput } from "./figma/FigmaInput";
+import { FigmaCard, FigmaCardHeader } from "./figma/FigmaCard";
+import { FloatingAIPrompt } from "./ai/FloatingAIPrompt";
 
 /* --- Types ------------------------------------------- */
 interface Experience {
@@ -15,130 +18,68 @@ interface Experience {
   expanded?: boolean;
 }
 
-/* --- Shared styles ------------------------------------------- */
-const S = {
-  label: { fontSize: 11, fontWeight: 500, color: "#a1a1aa", marginBottom: 6, display: "block" } as React.CSSProperties,
-  input: {
-    background: "rgba(24,24,27,0.5)", border: "1px solid #27272a", borderRadius: 8,
-    padding: "8px 12px", fontSize: 13, color: "#e4e4e7", width: "100%", outline: "none",
-    transition: "border-color 200ms", fontFamily: "'Inter', sans-serif", boxSizing: "border-box",
-  } as React.CSSProperties,
-  textarea: {
-    background: "rgba(24,24,27,0.5)", border: "1px solid #27272a", borderRadius: 8,
-    padding: "12px 16px", fontSize: 13, color: "#e4e4e7", width: "100%", outline: "none",
-    resize: "none" as const, fontFamily: "'Inter', sans-serif", boxSizing: "border-box",
-  } as React.CSSProperties,
-  numBadge: {
-    width: 24, height: 24, borderRadius: 6, background: "#27272a", border: "1px solid #3f3f46",
-    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#71717a",
-  } as React.CSSProperties,
-};
-
-/* --- AI mini drawer ------------------------------------------- */
-function AIWidget({ onApply }: { onApply: (t: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
-  const [generating, setGenerating] = useState(false);
-
-  const SAMPLE = "AquaDot, SmartFlow IV, Med Inventory — multi-system IoT & Edge AI builds successfully completed and validated.";
-
-  function generate() {
-    setGenerating(true);
-    setResponse("");
-    let i = 0;
-    const interval = setInterval(() => {
-      i += 4;
-      setResponse(SAMPLE.slice(0, i));
-      if (i >= SAMPLE.length) { clearInterval(interval); setGenerating(false); }
-    }, 25);
-  }
-
-  if (!open) return (
-    <button onClick={() => setOpen(true)} style={{ position: "absolute", top: 8, right: 8, background: "rgba(39,39,42,0.8)", border: "1px solid rgba(63,63,70,0.5)", borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 600, color: "#a855f7", cursor: "pointer", backdropFilter: "blur(8px)", fontFamily: "'Inter', sans-serif" }}>
-      <Sparkles size={12} /> AI
-    </button>
-  );
-
-  return (
-    <div style={{ marginTop: 12, background: "#09090b", border: "1px solid #27272a", borderRadius: 12, padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Sparkles size={14} color="#a855f7" /><span style={{ fontSize: 12, fontWeight: 600, color: "#e4e4e7" }}>AI Assistant</span></div>
-        <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#52525b", display: "flex" }}><X size={14} /></button>
-      </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-        {["Summarize timeline entry", "Make professional", "Add technical keywords"].map((c) => (
-          <button key={c} onClick={generate} style={{ background: "#18181b", border: "1px solid #27272a", borderRadius: 9999, padding: "4px 10px", fontSize: 11, color: "#a1a1aa", cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>{c}</button>
-        ))}
-      </div>
-      <div style={{ display: "flex", gap: 8, marginBottom: response ? 12 : 0 }}>
-        <input value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => e.key === "Enter" && generate()} placeholder="Custom instruction..." style={{ ...S.input, flex: 1, padding: "6px 10px", fontSize: 12 }} />
-        <button onClick={generate} style={{ background: "#7c3aed", border: "none", borderRadius: 8, padding: "6px 10px", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center" }}><ArrowRight size={13} /></button>
-      </div>
-      {response && (
-        <div style={{ background: "rgba(24,24,27,0.6)", border: "1px solid #27272a", borderRadius: 10, padding: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: "#a855f7", marginBottom: 6 }}>AI Draft</div>
-          <p style={{ fontSize: 12, color: "#d4d4d8", lineHeight: 1.6, margin: 0 }}>{response}{generating && "|"}</p>
-          {!generating && (
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={() => { onApply(response); setOpen(false); setResponse(""); }} style={{ background: "rgba(5,46,22,0.8)", border: "1px solid rgba(22,101,52,0.5)", color: "#4ade80", fontSize: 11, padding: "5px 12px", borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "'Inter', sans-serif" }}><Check size={12} /> Apply</button>
-              <button onClick={() => setResponse("")} style={{ background: "#18181b", border: "1px solid #27272a", color: "#71717a", fontSize: 11, padding: "5px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>Discard</button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* --- ExperienceCard ------------------------------------------- */
 function ExperienceCard({ exp, onChange, onDelete }: { exp: Experience; onChange: (e: Experience) => void; onDelete: () => void }) {
+  const descRef = useRef<HTMLTextAreaElement>(null);
+
   function set(key: keyof Experience, val: string | boolean) {
     onChange({ ...exp, [key]: val });
   }
 
   return (
-    <div style={{ background: "rgba(24,24,27,0.6)", border: "1px solid #27272a", borderRadius: 16, padding: 20, marginBottom: 16 }}>
+    <FigmaCard className="mb-4">
       {/* Card header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: exp.expanded ? 20 : 0 }}>
-        <GripVertical size={16} color="#3f3f46" style={{ cursor: "grab", flexShrink: 0 }} />
-        {!exp.expanded && (
-          <div style={{ flex: 1, fontSize: 13, color: "#a1a1aa" }}>
-            <span style={{ color: "#e4e4e7", fontWeight: 500, marginRight: 8 }}>{exp.year || "Year"}</span>
-            <span style={{ color: exp.accent || "#FF3B30", fontFamily: "JetBrains Mono, monospace", fontSize: 11, marginRight: 8 }}>{exp.label || "Index"}</span>
-            <span style={{ color: "#71717a" }}>— {exp.description || "No description"}</span>
+      <FigmaCardHeader className="flex flex-row items-center justify-between py-4 cursor-pointer" onClick={() => set("expanded", !exp.expanded)}>
+        <div className="flex items-center gap-3">
+          <div onClick={(e) => e.stopPropagation()}><GripVertical size={16} className="text-zinc-500 cursor-grab" /></div>
+          {!exp.expanded && (
+            <div className="flex items-center gap-2 text-[13px] text-zinc-400">
+              <span className="text-zinc-200 font-medium">{exp.year || "Year"}</span>
+              <span style={{ color: exp.accent || "#FF3B30" }} className="font-mono text-[11px]">{exp.label || "Index"}</span>
+              <span className="truncate max-w-[300px]">— {exp.description || "No description"}</span>
+            </div>
+          )}
+          {exp.expanded && <span className="text-zinc-200 text-[13px] font-medium">Edit Timeline Event</span>}
+        </div>
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onDelete} className="p-1 text-zinc-500 hover:text-rose-500 transition-colors">
+            <Trash2 size={14} />
+          </button>
+          <div className="p-1 text-zinc-500">
+            {exp.expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
-        )}
-        {exp.expanded && <div style={{ flex: 1 }} />}
-        <button onClick={() => set("expanded", !exp.expanded)} style={{ background: "none", border: "none", cursor: "pointer", color: "#52525b", display: "flex", padding: 4 }}>
-          {exp.expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", color: "#52525b", display: "flex", padding: 4, transition: "color 150ms" }}>
-          <Trash2 size={14} />
-        </button>
-      </div>
+        </div>
+      </FigmaCardHeader>
 
       {exp.expanded && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-            <div><label style={S.label}>Year</label><input value={exp.year} onChange={(e) => set("year", e.target.value)} style={S.input} placeholder="2025" /></div>
-            <div><label style={S.label}>Label / Index</label><input value={exp.label} onChange={(e) => set("label", e.target.value)} style={S.input} placeholder="01/" /></div>
-            <div>
-              <label style={S.label}>Accent Color</label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input type="color" value={exp.accent.startsWith("#") ? exp.accent : "#FF3B30"} onChange={(e) => set("accent", e.target.value)} style={{ width: 32, height: 32, padding: 0, border: "1px solid #27272a", background: "none", cursor: "pointer" }} />
-                <input value={exp.accent} onChange={(e) => set("accent", e.target.value)} style={S.input} placeholder="#FF3B30" />
+        <div className="p-6 pt-0 flex flex-col gap-5 border-t border-white/5 mt-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <FigmaInput label="Year" value={exp.year} onChange={(e) => set("year", e.target.value)} placeholder="2025" />
+            <FigmaInput label="Label / Index" value={exp.label} onChange={(e) => set("label", e.target.value)} placeholder="01/" />
+            <div className="flex flex-col gap-1.5 w-full">
+              <label className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">Accent Color</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={exp.accent.startsWith("#") ? exp.accent : "#FF3B30"} onChange={(e) => set("accent", e.target.value)} className="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer shrink-0" />
+                <FigmaInput value={exp.accent} onChange={(e) => set("accent", e.target.value)} placeholder="#FF3B30" />
               </div>
             </div>
           </div>
-          <div style={{ position: "relative" }}>
-            <label style={S.label}>Description</label>
-            <textarea value={exp.description} onChange={(e) => set("description", e.target.value)} rows={3} style={{ ...S.textarea, minHeight: 80, paddingRight: 60 }} placeholder="B.Tech ECE + Data Science, SRMIST" />
-            <AIWidget onApply={(text) => set("description", text)} />
+          
+          <div className="relative">
+            <label className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase mb-1.5 block">Description</label>
+            <textarea 
+              ref={descRef}
+              value={exp.description} 
+              onChange={(e) => set("description", e.target.value)} 
+              rows={3} 
+              className="w-full bg-zinc-950 border border-white/10 rounded-lg p-3 text-[13px] text-zinc-200 outline-none focus:border-blue-500 transition-colors resize-none" 
+              placeholder="B.Tech ECE + Data Science, SRMIST" 
+            />
+            <FloatingAIPrompt onApply={(text) => set("description", text)} />
           </div>
         </div>
       )}
-    </div>
+    </FigmaCard>
   );
 }
 
@@ -164,7 +105,6 @@ export function ExperiencePage({ initialData, onSave }: { initialData: Experienc
   }
   async function save() {
     setSaving(true);
-    // Strip client-only expanded state
     const cleanData = experiences.map(({ id, expanded, ...rest }) => rest);
     try {
       await onSave(cleanData as any);
@@ -180,26 +120,26 @@ export function ExperiencePage({ initialData, onSave }: { initialData: Experienc
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-      style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", background: "#09090b", fontFamily: "'Inter', sans-serif" }}>
+      className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950 font-sans">
 
       {/* Top Bar */}
-      <div style={{ padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1f1f22", flexShrink: 0 }}>
+      <div className="px-8 py-5 flex items-center justify-between border-b border-white/5 shrink-0">
         <div>
-          <div style={{ fontSize: 20, fontWeight: 600, color: "#fafafa", marginBottom: 4 }}>History & Timeline</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#71717a" }}>
+          <h1 className="text-xl font-semibold text-zinc-50 mb-1">History & Timeline</h1>
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
             <span>{experiences.length} entries in</span>
-            <span style={{ background: "#18181b", border: "1px solid #27272a", borderRadius: 4, padding: "2px 8px", fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#a1a1aa" }}>experience.json</span>
+            <span className="bg-zinc-900 border border-white/10 rounded px-2 py-0.5 font-mono text-[11px] text-zinc-300">experience.json</span>
           </div>
         </div>
         <button onClick={save} disabled={saving}
-          style={{ background: saved ? "#166534" : "#3b82f6", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 200ms", boxShadow: "0 0 16px rgba(59,130,246,0.3)", fontFamily: "'Inter', sans-serif" }}>
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium text-white transition-all shadow-[0_0_16px_rgba(59,130,246,0.2)] ${saved ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"}`}>
           {saved ? <><Check size={14} /> Saved</> : saving ? "Saving..." : <><Save size={14} /> Save Changes</>}
         </button>
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}>
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="max-w-3xl mx-auto pb-12">
           <AnimatePresence>
             {experiences.map((exp) => (
               <motion.div key={exp.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} transition={{ duration: 0.15 }}>
@@ -207,10 +147,9 @@ export function ExperiencePage({ initialData, onSave }: { initialData: Experienc
               </motion.div>
             ))}
           </AnimatePresence>
-          <button onClick={add} style={{ width: "100%", border: "1px dashed #27272a", borderRadius: 12, padding: "12px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, color: "#52525b", cursor: "pointer", background: "none", fontFamily: "'Inter', sans-serif", transition: "all 200ms" }}>
+          <button onClick={add} className="w-full border border-dashed border-white/10 rounded-xl py-4 flex items-center justify-center gap-2 text-[13px] text-zinc-400 hover:text-zinc-200 hover:border-white/20 transition-all bg-transparent">
             <Plus size={16} /> Add Timeline Event
           </button>
-          <div style={{ height: 32 }} />
         </div>
       </div>
     </motion.div>

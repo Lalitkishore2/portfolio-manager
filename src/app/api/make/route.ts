@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
-import { getContentJSON, saveContentJSON } from "@/lib/github";
+import { getContentJSON } from "@/lib/github";
+import { jsonrepair } from "jsonrepair";
 
 export async function POST(request: Request) {
   try {
-    const { prompt, provider = "gemini", targetSection = "projects" } = await request.json();
+    const body = await request.json();
+    const prompt = body.prompt;
+    const provider = (body.provider || "gemini").toLowerCase();
+    const targetSection = body.targetSection || "projects";
+    const selectedNodeId = body.selectedNodeId || null;
+    const image = body.image;
+
+    console.log("[MAKE API] Received provider:", provider, "Original:", body.provider);
 
     if (!prompt) {
       return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
@@ -11,9 +19,11 @@ export async function POST(request: Request) {
 
     // 1. Read current state from GitHub
     let currentData: any = targetSection === "profile" ? {} : [];
+    let currentSha: string | undefined;
     try {
-      const { data } = await getContentJSON(`${targetSection}.json`);
+      const { data, sha } = await getContentJSON(`${targetSection}.json`);
       currentData = data;
+      currentSha = sha;
     } catch (e) {
       currentData = targetSection === "profile" ? {} : [];
     }
@@ -21,10 +31,13 @@ export async function POST(request: Request) {
     // 2. Build AI Prompt
     const systemInstruction = `You are an AI assistant acting as the backend for a visual CMS editor.
 Your job is to read the current state of a JSON ${targetSection === "profile" ? "object" : "array"} representing ${targetSection} for a portfolio, and apply the user's requested modifications.
+If the user specifies they want to add a "new" item or no specific item is selected, APPEND a newly generated item to the array (if it's an array).
+CRITICAL: When generating new items, always automatically generate a unique, human-readable \`id\` or \`slug\` based on the content (e.g., 'eco-dashboard', 'new-hero-banner').
 Ensure the resulting JSON strictly matches the existing schema and is a valid JSON ${targetSection === "profile" ? "object" : "array"}.
 Return ONLY the raw JSON ${targetSection === "profile" ? "object" : "array"}. Do not use markdown formatting blocks like \`\`\`json.`;
     
     const userMessage = `User Request: "${prompt}"
+${selectedNodeId ? `Note: The user currently has the item "${selectedNodeId}" selected. Prioritize modifications on this item.` : "Note: No specific item is selected. Generate a new item or modify globally based on the request."}
 
 Current JSON ${targetSection === "profile" ? "Object" : "Array"}:
 ${JSON.stringify(currentData, null, 2)}`;
@@ -36,8 +49,8 @@ ${JSON.stringify(currentData, null, 2)}`;
       const apiKey = process.env.OPENROUTER_API_KEY;
       if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set.");
       const openRouterModel = provider === "openrouter-deepseek" 
-        ? "deepseek/deepseek-chat-v3-0324:free" 
-        : "qwen/qwen3-coder:free";
+        ? "deepseek/deepseek-r1" 
+        : "qwen/qwen-2.5-coder-32b-instruct";
         
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -50,7 +63,8 @@ ${JSON.stringify(currentData, null, 2)}`;
           messages: [
             { role: "system", content: systemInstruction },
             { role: "user", content: userMessage }
-          ]
+          ],
+          response_format: { type: "json_object" }
         })
       });
       const data = await res.json();
@@ -60,9 +74,7 @@ ${JSON.stringify(currentData, null, 2)}`;
     else if (provider.startsWith("groq")) {
       const apiKey = process.env.GROQ_API_KEY;
       if (!apiKey) throw new Error("GROQ_API_KEY is not set.");
-      const groqModel = provider === "groq-qwen3" 
-        ? "qwen-qwen3-32b" 
-        : "llama-3.3-70b-versatile";
+      const groqModel = "llama-3.3-70b-versatile";
         
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -75,7 +87,9 @@ ${JSON.stringify(currentData, null, 2)}`;
           messages: [
             { role: "system", content: systemInstruction },
             { role: "user", content: userMessage }
-          ]
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 1500
         })
       });
       const data = await res.json();
@@ -92,7 +106,7 @@ ${JSON.stringify(currentData, null, 2)}`;
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "deepseek-r1-0528",
+          model: "meta/llama-3.1-8b-instruct",
           messages: [
             { role: "system", content: systemInstruction },
             { role: "user", content: userMessage }
@@ -100,7 +114,9 @@ ${JSON.stringify(currentData, null, 2)}`;
           max_tokens: 4000
         })
       });
-      const data = await res.json();
+      const resText = await res.text();
+      let data;
+      try { data = JSON.parse(resText); } catch(e) { throw new Error(`NVIDIA API non-JSON response: ${resText.substring(0, 100)}`); }
       if (data.error) throw new Error(data.error.message || "NVIDIA error");
       generatedText = data.choices?.[0]?.message?.content;
     } 
@@ -150,18 +166,32 @@ ${JSON.stringify(currentData, null, 2)}`;
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("GEMINI_API_KEY is not set.");
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemInstruction }] },
-            contents: [{ role: "user", parts: [{ text: userMessage }] }],
+            contents: [{ 
+              role: "user", 
+              parts: [
+                ...(body.image ? [{
+                  inlineData: {
+                    mimeType: body.image.split(';')[0].split(':')[1],
+                    data: body.image.split(',')[1]
+                  }
+                }] : []),
+                { text: userMessage }
+              ] 
+            }],
             generationConfig: { responseMimeType: "application/json" }
           }),
         }
       );
-      if (!res.ok) throw new Error("Gemini API Error");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini API Error: ${res.status} - ${errText}`);
+      }
       const data = await res.json();
       generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     }
@@ -170,21 +200,38 @@ ${JSON.stringify(currentData, null, 2)}`;
       throw new Error("No content generated from AI.");
     }
 
-    // Clean up markdown block if the AI ignored the instruction
+    // Robust JSON extraction
     generatedText = generatedText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const firstBrace = generatedText.indexOf('{');
+    const firstBracket = generatedText.indexOf('[');
+    const firstValid = Math.min(
+      firstBrace === -1 ? Infinity : firstBrace, 
+      firstBracket === -1 ? Infinity : firstBracket
+    );
+    if (firstValid !== Infinity) {
+      const lastBrace = generatedText.lastIndexOf('}');
+      const lastBracket = generatedText.lastIndexOf(']');
+      const lastValid = Math.max(lastBrace, lastBracket);
+      if (lastValid !== -1 && lastValid >= firstValid) {
+        generatedText = generatedText.substring(firstValid, lastValid + 1);
+      }
+    }
 
     let newJson;
     try {
       newJson = JSON.parse(generatedText);
     } catch (parseErr) {
-      console.error("Failed to parse AI output:", generatedText);
-      throw new Error("AI returned invalid JSON.");
+      try {
+        const repaired = jsonrepair(generatedText);
+        newJson = JSON.parse(repaired);
+      } catch (repairErr) {
+        console.error("Failed to parse and repair AI output:", generatedText);
+        throw new Error(`AI returned invalid JSON: ${generatedText.substring(0, 50)}...`);
+      }
     }
 
-    // 4. Write back to GitHub
-    await saveContentJSON(`${targetSection}.json`, newJson, `cms: AI-generated update to ${targetSection}`);
-
-    return NextResponse.json({ success: true, updatedCount: Array.isArray(newJson) ? newJson.length : 1, provider });
+    // 4. Return patch without saving (decoupled generation from apply)
+    return NextResponse.json({ success: true, updatedCount: Array.isArray(newJson) ? newJson.length : 1, provider, patch: newJson });
 
   } catch (error: any) {
     console.error("Make API Error:", error);

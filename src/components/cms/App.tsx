@@ -2,43 +2,76 @@
 
 import { useState } from "react";
 import { Toaster, toast } from "sonner";
+import dynamic from "next/dynamic";
 import { CMSSidebar, type CMSView } from "./CMSSidebar";
 import { ProjectList } from "./ProjectList";
-import { ProjectEditor } from "./ProjectEditor";
-import { AnalyticsDashboard } from "./AnalyticsDashboard";
-import { ChatbotAuditorScreen } from "./ChatbotAuditorScreen";
-import { MakePage } from "./MakePage";
-import { ProfilePage } from "./ProfilePage";
-import { ExperiencePage } from "./ExperiencePage";
-import { SkillsPage } from "./SkillsPage";
-import { SettingsPage } from "./SettingsPage";
+import { CommandPalette } from "./ui/CommandPalette";
+import { PublishModal } from "./ui/PublishModal";
+
+// Dynamically import heavy views
+const ProjectEditor = dynamic(() => import("./ProjectEditor").then((mod) => mod.ProjectEditor), { ssr: false });
+const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard").then((mod) => mod.AnalyticsDashboard), { ssr: false });
+const ChatbotAuditorScreen = dynamic(() => import("./ChatbotAuditorScreen").then((mod) => mod.ChatbotAuditorScreen), { ssr: false });
+const MakePage = dynamic(() => import("./MakePage").then((mod) => mod.MakePage), { ssr: false });
+const ProfilePage = dynamic(() => import("./ProfilePage").then((mod) => mod.ProfilePage), { ssr: false });
+const ExperiencePage = dynamic(() => import("./ExperiencePage").then((mod) => mod.ExperiencePage), { ssr: false });
+const SkillsPage = dynamic(() => import("./SkillsPage").then((mod) => mod.SkillsPage), { ssr: false });
+const SettingsPage = dynamic(() => import("./SettingsPage").then((mod) => mod.SettingsPage), { ssr: false });
+const TokensPage = dynamic(() => import("./TokensPage").then((mod) => mod.TokensPage), { ssr: false });
 import { type Project } from "./cms-types";
+import { useMakeStore } from "../../store/makeStore";
+import { useEffect } from "react";
 
 /* --- App ------------------------------------------------------- */
 
 export default function App({
-  initialProjects,
-  initialProfile,
-  initialSkills,
-  initialExperience,
-  initialChatbot,
+  initialProjects, initialProjectsSha,
+  initialProfile, initialProfileSha,
+  initialSkills, initialSkillsSha,
+  initialExperience, initialExperienceSha,
+  initialChatbot, initialChatbotSha,
 }: {
-  initialProjects: Project[];
-  initialProfile: any;
-  initialSkills: any[];
-  initialExperience: any[];
-  initialChatbot: any;
+  initialProjects: Project[]; initialProjectsSha: string;
+  initialProfile: any; initialProfileSha: string;
+  initialSkills: any[]; initialSkillsSha: string;
+  initialExperience: any[]; initialExperienceSha: string;
+  initialChatbot: any; initialChatbotSha: string;
 }) {
+  const { siteDocument, setSiteDocument, addVersion, versions } = useMakeStore();
+
   const [activeView, setActiveView] = useState<CMSView>("projects");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [profile, setProfile] = useState(initialProfile);
-  const [skills, setSkills] = useState<any[]>(initialSkills);
-  const [experience, setExperience] = useState<any[]>(initialExperience);
+  const [projectsSha, setProjectsSha] = useState(initialProjectsSha);
+  const [profileSha, setProfileSha] = useState(initialProfileSha);
+  const [skillsSha, setSkillsSha] = useState(initialSkillsSha);
+  const [experienceSha, setExperienceSha] = useState(initialExperienceSha);
   const [chatbot, setChatbot] = useState(initialChatbot);
+  const [chatbotSha, setChatbotSha] = useState(initialChatbotSha);
+  
+  const currentDoc = siteDocument?.projects ? siteDocument : {
+    projects: initialProjects,
+    profile: initialProfile,
+    skills: initialSkills,
+    experience: initialExperience
+  };
+
+  useEffect(() => {
+    // Only initialize if the store is empty (e.g. first load) to prevent overwriting AI drafts
+    if (!siteDocument?.projects) {
+      setSiteDocument(currentDoc);
+      if (useMakeStore.getState().versions.length === 0) {
+        addVersion("Initial Load", currentDoc);
+      }
+    }
+  }, []);
+
+  const projects = currentDoc.projects || [];
+  const profile = currentDoc.profile || {};
+  const skills = currentDoc.skills || [];
+  const experience = currentDoc.experience || [];
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState(false);
-
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
   function handleNavigate(view: CMSView) {
     setActiveView(view);
     if (view !== "project-editor") setSelectedProjectId(null);
@@ -49,51 +82,106 @@ export default function App({
     setActiveView("project-editor");
   }
 
-  async function handleSaveProject(updated: Project) {
-    const newProjects = projects.map((p) => p.id === updated.id ? updated : p);
-    setProjects(newProjects);
-    
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newProjects),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to save project changes");
-    }
-  }
-
-  async function handleDeleteProject(id: string) {
-    const deletedProject = projects.find((p) => p.id === id);
-    if (!deletedProject) return;
-    
-    const remainingProjects = projects.filter((p) => p.id !== id);
-    
-    // Update nextSlug/prevSlug link structure
-    const prevSlug = deletedProject.prevSlug;
-    const nextSlug = deletedProject.nextSlug;
-    const slug = deletedProject.slug;
-    
-    const newProjects = remainingProjects.map((p) => {
-      let updated = { ...p };
-      if (updated.nextSlug === slug) {
-        updated.nextSlug = nextSlug;
-      }
-      if (updated.prevSlug === slug) {
-        updated.prevSlug = prevSlug;
-      }
-      return updated;
-    });
-    
-    setProjects(newProjects);
+  async function handleNewProject() {
+    const uid = () => Math.random().toString(36).substring(2, 9);
+    const newProj: Project = {
+      id: uid(),
+      title: "Untitled Project",
+      tagline: "A new portfolio project",
+      slug: `new-project-${Date.now()}`,
+      index: "00/",
+      year: `${new Date().getFullYear()}`,
+      accentColor: "#3B82F6",
+      overview: "",
+      problem: "",
+      description: "A new project",
+      tags: [],
+      metric: "",
+      rotation: 0,
+      architecture: [],
+      techStack: [],
+      role: [],
+      challenges: [],
+      status: "prototype",
+      category: "WEB",
+      nextSlug: "",
+      prevSlug: "",
+      stats: [],
+      updatedAt: new Date().toISOString(),
+    };
+    const newProjects = [newProj, ...projects];
+    setSiteDocument({ ...currentDoc, projects: newProjects });
     
     try {
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProjects),
+        body: JSON.stringify({ data: newProjects, sha: projectsSha }),
       });
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setProjectsSha(sha);
+      handleSelectProject(newProj.id);
+      toast.success("New project created!");
+    } catch (e) {
+      console.error("Failed to create project", e);
+      toast.error("Failed to create new project");
+    }
+  }
+
+  async function handleSaveProject(updated: Project) {
+    const newProjects = projects.map((p: Project) => p.id === updated.id ? updated : p);
+    setSiteDocument({ ...currentDoc, projects: newProjects });
+    
+    const response = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: newProjects, sha: projectsSha }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to save project changes");
+    }
+    
+    const { sha } = await response.json();
+    setProjectsSha(sha);
+  }
+
+  async function handleDeleteProject(id: string) {
+    const deletedProject = projects.find((p: Project) => p.id === id);
+    if (!deletedProject) return;
+    
+    const remainingProjects = projects.filter((p: Project) => p.id !== id);
+    
+    const prevSlug = deletedProject.prevSlug;
+    const nextSlug = deletedProject.nextSlug;
+    const slug = deletedProject.slug;
+    
+    const newProjects = remainingProjects.map((p: Project) => {
+      let updated = { ...p };
+      if (updated.nextSlug === slug) updated.nextSlug = nextSlug;
+      if (updated.prevSlug === slug) updated.prevSlug = prevSlug;
+      return updated;
+    });
+    
+    setSiteDocument({ ...currentDoc, projects: newProjects });
+    
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: newProjects, sha: projectsSha }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setProjectsSha(sha);
       handleNavigate("projects");
       toast.success("Project deleted successfully", { description: `${deletedProject.title} was removed` });
     } catch (e) {
@@ -103,14 +191,19 @@ export default function App({
   }
 
   async function handleSaveProfile(updatedProfile: any) {
-    setProfile(updatedProfile);
+    setSiteDocument({ ...currentDoc, profile: updatedProfile });
     try {
       const response = await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProfile),
+        body: JSON.stringify({ data: updatedProfile, sha: profileSha }),
       });
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setProfileSha(sha);
     } catch (e) {
       console.error("Failed to save profile", e);
       throw e;
@@ -118,14 +211,19 @@ export default function App({
   }
 
   async function handleSaveSkills(updatedSkills: any[]) {
-    setSkills(updatedSkills);
+    setSiteDocument({ ...currentDoc, skills: updatedSkills });
     try {
       const response = await fetch('/api/skills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedSkills),
+        body: JSON.stringify({ data: updatedSkills, sha: skillsSha }),
       });
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setSkillsSha(sha);
     } catch (e) {
       console.error("Failed to save skills", e);
       throw e;
@@ -133,14 +231,19 @@ export default function App({
   }
 
   async function handleSaveExperience(updatedExperience: any[]) {
-    setExperience(updatedExperience);
+    setSiteDocument({ ...currentDoc, experience: updatedExperience });
     try {
       const response = await fetch('/api/experience', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedExperience),
+        body: JSON.stringify({ data: updatedExperience, sha: experienceSha }),
       });
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setExperienceSha(sha);
     } catch (e) {
       console.error("Failed to save experience", e);
       throw e;
@@ -153,16 +256,25 @@ export default function App({
       const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedChatbot),
+        body: JSON.stringify({ data: updatedChatbot, sha: chatbotSha }),
       });
-      if (!response.ok) throw new Error("Server error");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Server error");
+      }
+      const { sha } = await response.json();
+      setChatbotSha(sha);
     } catch (e) {
       console.error("Failed to save chatbot", e);
       throw e;
     }
   }
 
-  async function handlePublish() {
+  function handlePublish() {
+    setPublishModalOpen(true);
+  }
+
+  async function confirmPublish(message: string) {
     setPublishing(true);
     try {
       const response = await fetch("/api/publish", { method: "POST" });
@@ -171,7 +283,7 @@ export default function App({
         throw new Error(data.error || "Failed to push to GitHub");
       }
       setPublished(true);
-      toast.success(data.message || "Changes pushed to GitHub successfully!");
+      toast.success(data.message || `Changes pushed: ${message}`);
       setTimeout(() => setPublished(false), 3000);
     } catch (e: any) {
       console.error("Git publish failed", e);
@@ -181,7 +293,7 @@ export default function App({
     }
   }
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
+  const selectedProject = projects.find((p: Project) => p.id === selectedProjectId) ?? null;
 
   function renderMain() {
     switch (activeView) {
@@ -190,7 +302,7 @@ export default function App({
           <ProjectList
             projects={projects}
             onSelectProject={handleSelectProject}
-            onNewProject={() => {}}
+            onNewProject={handleNewProject}
           />
         );
       case "project-editor":
@@ -218,6 +330,8 @@ export default function App({
         return <ExperiencePage initialData={experience} onSave={handleSaveExperience} />;
       case "skills":
         return <SkillsPage initialData={skills} onSave={handleSaveSkills} />;
+      case "tokens":
+        return <TokensPage />;
       case "settings":
         return <SettingsPage />;
       default:
@@ -248,6 +362,9 @@ export default function App({
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {renderMain()}
       </div>
+
+      <CommandPalette onNavigate={handleNavigate} onSelectProject={handleSelectProject} />
+      <PublishModal isOpen={publishModalOpen} onClose={() => setPublishModalOpen(false)} onConfirmPublish={confirmPublish} />
 
       <Toaster
         position="bottom-right"
