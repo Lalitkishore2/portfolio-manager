@@ -67,27 +67,121 @@ export function TokensPage() {
 
         <FigmaCard>
           <FigmaCardHeader>
-            <FigmaCardTitle>Color Palette</FigmaCardTitle>
+            <div className="flex items-center justify-between">
+              <FigmaCardTitle>Color Palette &amp; Presets</FigmaCardTitle>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTokens({
+                      ...tokens,
+                      primary: "#FF84BA",
+                      background: "#FFEFE3",
+                      surface: "#FFFFFF",
+                      textMain: "#111111",
+                      textMuted: "#6b7280",
+                    })
+                  }
+                  className="px-2.5 py-1 text-xs bg-pink-500/20 text-pink-300 border border-pink-500/40 rounded hover:bg-pink-500/30 transition-colors"
+                >
+                  Pastel Sweet
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTokens({
+                      ...tokens,
+                      primary: "#2D5BFF",
+                      background: "#0A0A0A",
+                      surface: "#111111",
+                      textMain: "#FAFAFA",
+                      textMuted: "#A1A1AA",
+                    })
+                  }
+                  className="px-2.5 py-1 text-xs bg-blue-500/20 text-blue-300 border border-blue-500/40 rounded hover:bg-blue-500/30 transition-colors"
+                >
+                  Obsidian Dark
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTokens({
+                      ...tokens,
+                      primary: "#10B981",
+                      background: "#064E3B",
+                      surface: "#047857",
+                      textMain: "#ECFDF5",
+                      textMuted: "#A7F3D0",
+                    })
+                  }
+                  className="px-2.5 py-1 text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded hover:bg-emerald-500/30 transition-colors"
+                >
+                  Emerald Cyber
+                </button>
+              </div>
+            </div>
           </FigmaCardHeader>
           <FigmaCardContent className="grid grid-cols-2 gap-6">
-            <FigmaInput 
-              label="Primary Accent" 
-              value={tokens.primary}
-              onChange={(e) => setTokens({ ...tokens, primary: e.target.value })}
-              icon={<div style={{width: 12, height: 12, borderRadius: "50%", background: tokens.primary}} />}
-            />
-            <FigmaInput 
-              label="Background Base" 
-              value={tokens.background}
-              onChange={(e) => setTokens({ ...tokens, background: e.target.value })}
-              icon={<div style={{width: 12, height: 12, borderRadius: "50%", background: tokens.background}} />}
-            />
-            <FigmaInput 
-              label="Surface (Cards/Sidebars)" 
-              value={tokens.surface}
-              onChange={(e) => setTokens({ ...tokens, surface: e.target.value })}
-              icon={<div style={{width: 12, height: 12, borderRadius: "50%", background: tokens.surface}} />}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={tokens.primary || "#2D5BFF"}
+                onChange={(e) => setTokens({ ...tokens, primary: e.target.value })}
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+              />
+              <div className="flex-1">
+                <FigmaInput
+                  label="Primary Accent"
+                  value={tokens.primary}
+                  onChange={(e) => setTokens({ ...tokens, primary: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={tokens.background || "#0A0A0A"}
+                onChange={(e) => setTokens({ ...tokens, background: e.target.value })}
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+              />
+              <div className="flex-1">
+                <FigmaInput
+                  label="Background Base"
+                  value={tokens.background}
+                  onChange={(e) => setTokens({ ...tokens, background: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={tokens.surface || "#111111"}
+                onChange={(e) => setTokens({ ...tokens, surface: e.target.value })}
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+              />
+              <div className="flex-1">
+                <FigmaInput
+                  label="Surface (Cards/Sidebars)"
+                  value={tokens.surface}
+                  onChange={(e) => setTokens({ ...tokens, surface: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={tokens.textMain || "#FAFAFA"}
+                onChange={(e) => setTokens({ ...tokens, textMain: e.target.value })}
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+              />
+              <div className="flex-1">
+                <FigmaInput
+                  label="Main Text Color"
+                  value={tokens.textMain || "#FAFAFA"}
+                  onChange={(e) => setTokens({ ...tokens, textMain: e.target.value })}
+                />
+              </div>
+            </div>
           </FigmaCardContent>
         </FigmaCard>
 

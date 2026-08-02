@@ -10,9 +10,17 @@ export function createContentRoute(filename: string, commitLabel: string, defaul
         return NextResponse.json({ data, sha });
       } catch (error: any) {
         if (error.message.includes("404")) {
+          const fs = require("fs");
+          const path = require("path");
+          const localPath = path.join(process.cwd(), "..", "PORTFOLIO", "content", filename);
+          if (fs.existsSync(localPath)) {
+            try {
+              const localData = JSON.parse(fs.readFileSync(localPath, "utf-8"));
+              return NextResponse.json({ data: localData, sha: "" });
+            } catch (e) {}
+          }
           let fallback = defaultValue;
           if (fallback === undefined) {
-             // Try to infer from filename
              fallback = filename.includes("projects") || filename.includes("experience") || filename.includes("skills") || filename.includes("queries") ? [] : {};
           }
           return NextResponse.json({ data: fallback, sha: "" });
