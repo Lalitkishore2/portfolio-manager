@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMakeStore } from "@/store/makeStore";
 import { GlassCalendar } from "../ui/glass-calendar";
 import { LiquidButton, MetalButton } from "../ui/liquid-glass-button";
@@ -278,17 +278,61 @@ function generateDynamicTrafficData() {
   return data;
 }
 
-export function AnalyticsDashboard() {
+export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) => void }) {
   const { siteDocument } = useMakeStore();
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuildDone, setRebuildDone] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [liveData, setLiveData] = useState<{
+    commits: Array<{ hash: string; message: string; relativeTime: string }>;
+    categoryStats: Array<{ name: string; value: number; count: number }>;
+    unresolvedQueries: number;
+    coverageRate: number;
+    trafficData: Array<{ day: string; views: number }>;
+  } | null>(null);
 
-  const trafficData = generateDynamicTrafficData();
+  useEffect(() => {
+    async function fetchAnalytics() {
+      try {
+        const res = await fetch("/api/analytics");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.ok) {
+            setLiveData(json);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load analytics data", e);
+      }
+    }
+    fetchAnalytics();
+  }, []);
+
+  const trafficData = liveData?.trafficData || generateDynamicTrafficData();
+  const categoryData = liveData?.categoryStats && liveData.categoryStats.length > 0 ? liveData.categoryStats : [
+    { name: "IOT", value: 33, count: 3 },
+    { name: "HEALTHCARE", value: 22, count: 2 },
+    { name: "WEB", value: 22, count: 2 },
+    { name: "AI", value: 22, count: 2 },
+  ];
+
+  const recentCommits = liveData?.commits && liveData.commits.length > 0 ? liveData.commits.map((c) => ({
+    type: "commit",
+    text: c.message,
+    meta: c.hash,
+    time: c.relativeTime,
+  })) : [
+    { type: "commit", text: "style: refactor Analytics and Auditor aspect ratios", meta: "01d1d2d", time: "43 min ago" },
+    { type: "commit", text: "fix: resolve ReferenceErrors in Settings and Make", meta: "69cda22", time: "3 hours ago" },
+    { type: "commit", text: "feat: add dynamic design tokens API", meta: "c873171", time: "5 hours ago" },
+    { type: "commit", text: "fix(ui): end-to-end alignment protection", meta: "e56c6ec", time: "5 hours ago" },
+  ];
+
   const projectsCount = siteDocument?.projects?.length || 9;
-  const skillsCount = (siteDocument?.skills || []).reduce((acc: number, c: any) => acc + (c.skills?.length || 0), 0) || 32;
+  const skillsCount = (siteDocument?.skills || []).reduce((acc: number, c: any) => acc + (c.skills?.length || 0), 0) || 36;
   const categoriesCount = siteDocument?.skills?.length || 6;
   const experienceCount = siteDocument?.experience?.length || 4;
+  const latestCommitHash = recentCommits[0]?.meta || "bae0f65";
   const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   function handleRebuild() {
@@ -425,50 +469,50 @@ export function AnalyticsDashboard() {
             </div>
           </GlassCard>
 
-          {/* Referrers bar chart */}
+          {/* Category Breakdown bar chart */}
           <GlassCard>
             <div style={{ padding: "22px 20px" }}>
               <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Top Referrers
+                Project Domain Breakdown
               </div>
               <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 20 }}>
-                Traffic sources this month
+                Distribution across 9 projects in content/projects.json
               </div>
               <div style={{ height: 180 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart id="analytics-referrer-chart" data={REFERRER_DATA} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
+                  <BarChart id="analytics-referrer-chart" data={categoryData} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
                     <XAxis type="number" hide />
                     <YAxis
                       type="category"
                       dataKey="name"
-                      tick={{ fill: "var(--cms-text-secondary)", fontSize: 12, fontFamily: "'Inter', sans-serif" }}
+                      tick={{ fill: "var(--cms-text-secondary)", fontSize: 11, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
-                      width={56}
+                      width={85}
                     />
                     <Tooltip
                       cursor={{ fill: "rgba(255,255,255,0.02)" }}
                       content={({ active, payload }) =>
                         active && payload?.length ? (
                           <div style={{ background: "var(--cms-bg-card)", border: "1px solid var(--cms-border-dark)", borderRadius: 6, padding: "6px 10px", fontSize: 12, color: "var(--cms-text-primary)", fontFamily: "'Inter', sans-serif" }}>
-                            {payload[0].payload.name}: {payload[0].value}%
+                            {payload[0].payload.name}: {payload[0].value}% ({payload[0].payload.count} projects)
                           </div>
                         ) : null
                       }
                     />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      {REFERRER_DATA.map((_, i) => (
-                        <RechartsCell key={i} fill={REFERRER_COLORS[i]} opacity={0.85} />
+                      {categoryData.map((_, i) => (
+                        <RechartsCell key={i} fill={REFERRER_COLORS[i % REFERRER_COLORS.length]} opacity={0.85} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px", marginTop: 12 }}>
-                {REFERRER_DATA.map((r, i) => (
+                {categoryData.map((r, i) => (
                   <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--cms-text-secondary)" }}>
-                    <span style={{ width: 8, height: 8, borderRadius: 2, background: REFERRER_COLORS[i], display: "inline-block" }} />
-                    {r.name} <span style={{ color: REFERRER_COLORS[i] }}>{r.value}%</span>
+                    <span style={{ width: 8, height: 8, borderRadius: 2, background: REFERRER_COLORS[i % REFERRER_COLORS.length], display: "inline-block" }} />
+                    {r.name} <span style={{ color: REFERRER_COLORS[i % REFERRER_COLORS.length] }}>{r.value}%</span>
                   </div>
                 ))}
               </div>
@@ -504,16 +548,16 @@ export function AnalyticsDashboard() {
                 <QuickAction
                   icon={MessageSquare}
                   label="Review Chatbot Queries"
-                  desc="Inspect unreviewed queries in Auditor"
+                  desc="Inspect unresolved queries in Auditor"
                   color="#a78bfa"
-                  onClick={() => {}}
+                  onClick={() => onNavigate?.("chatbot")}
                 />
                 <QuickAction
                   icon={Code}
                   label="Database Status"
                   desc={`${projectsCount} Projects & ${skillsCount} Skills Synced`}
                   color="#f59e0b"
-                  onClick={() => {}}
+                  onClick={() => onNavigate?.("projects")}
                 />
               </div>
             </div>
@@ -523,17 +567,12 @@ export function AnalyticsDashboard() {
           <GlassCard>
             <div style={{ padding: "20px 22px" }}>
               <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
-                Recent Activity
+                Recent Git Activity
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {[
-                  { type: "commit", text: "Commit pushed to main", meta: "da60b550", time: "5 min ago" },
-                  { type: "deploy", text: "GitHub Pages deploy complete", meta: "Pages CI #148", time: "8 min ago" },
-                  { type: "bot",    text: "Chatbot knowledge updated", meta: "chatbot.json", time: "22 min ago" },
-                  { type: "commit", text: "Content validation passed", meta: "tokens.json", time: "1h ago" },
-                ].map((item, i, arr) => {
-                  const Icon = item.type === "commit" ? Code : item.type === "bot" ? Bot : Globe;
-                  const color = item.type === "commit" ? "var(--cms-accent-cobalt)" : item.type === "bot" ? "#a78bfa" : "var(--cms-accent-emerald)";
+                {recentCommits.map((item, i, arr) => {
+                  const Icon = Code;
+                  const color = "var(--cms-accent-cobalt)";
                   return (
                     <div
                       key={i}
@@ -561,14 +600,14 @@ export function AnalyticsDashboard() {
                         <Icon size={14} style={{ color }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: "var(--cms-text-primary)", fontSize: 13, fontWeight: 500 }}>{item.text}</div>
+                        <div style={{ color: "var(--cms-text-primary)", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.text}</div>
                         <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
                           <span style={{ color: "var(--cms-text-secondary)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{item.meta}</span>
                           <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>·</span>
                           <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>{item.time}</span>
                         </div>
                       </div>
-                      <a href="https://github.com/Lalitkishore2/portfolio" target="_blank" rel="noreferrer" style={{ color: "var(--cms-accent-cobalt)", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
+                      <a href={`https://github.com/Lalitkishore2/portfolio-manager/commit/${item.meta}`} target="_blank" rel="noreferrer" style={{ color: "var(--cms-accent-cobalt)", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
                         <ExternalLink size={10} />
                       </a>
                     </div>

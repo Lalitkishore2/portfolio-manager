@@ -319,7 +319,7 @@ export default function App({
           />
         );
       case "analytics":
-        return <AnalyticsDashboard />;
+        return <AnalyticsDashboard onNavigate={handleNavigate} />;
       case "chatbot":
         return <ChatbotAuditorScreen chatbotData={chatbot} onSave={handleSaveChatbot} />;
       case "make":
