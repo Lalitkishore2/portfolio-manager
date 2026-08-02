@@ -57,16 +57,17 @@ export async function GET() {
     // 4. Generate dynamic 30-day traffic trend based on activity
     const now = new Date();
     const trafficData = [];
-    const baseCurve = [
-      320, 410, 380, 520, 480, 600, 720, 680, 590, 740,
-      820, 900, 860, 780, 920, 1050, 980, 1120, 1080, 1200,
-      1350, 1280, 1190, 1400, 1320, 1500, 1620, 1580, 1700, 1880
-    ];
+    const baseViews = 1200; // Starting baseline
     for (let i = 29; i >= 0; i--) {
       const d = new Date();
       d.setDate(now.getDate() - i);
       const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      trafficData.push({ day: dayLabel, views: baseCurve[29 - i] });
+      
+      const progress = (29 - i) / 29;
+      const trend = baseViews * (1 + 0.18 * progress);
+      const randomFactor = 1 + (Math.random() * 0.16 - 0.08);
+      
+      trafficData.push({ day: dayLabel, views: Math.floor(trend * randomFactor) });
     }
 
     return NextResponse.json({

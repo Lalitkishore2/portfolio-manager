@@ -263,17 +263,24 @@ function QuickAction({
 /* --- Dynamic Traffic Data Generation (30 days up to today) --- */
 function generateDynamicTrafficData() {
   const data = [];
-  const baseViews = [
-    320, 410, 380, 520, 480, 600, 720, 680, 590, 740,
-    820, 900, 860, 780, 920, 1050, 980, 1120, 1080, 1200,
-    1350, 1280, 1190, 1400, 1320, 1500, 1620, 1580, 1700, 1880
-  ];
+  const baseViews = 1200; // Starting baseline
   const now = new Date();
+  
   for (let i = 29; i >= 0; i--) {
     const d = new Date();
     d.setDate(now.getDate() - i);
     const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    data.push({ day: dayLabel, views: baseViews[29 - i] });
+    
+    // Simulate ~18% growth over 30 days with some randomized daily fluctuation
+    // Day 0: ~1200, Day 30: ~1416 (which is +18%)
+    const progress = (29 - i) / 29; // 0 to 1
+    const trend = baseViews * (1 + 0.18 * progress);
+    
+    // Add randomness (-8% to +8%)
+    const randomFactor = 1 + (Math.random() * 0.16 - 0.08);
+    const dailyViews = Math.floor(trend * randomFactor);
+    
+    data.push({ day: dayLabel, views: dailyViews });
   }
   return data;
 }
@@ -437,13 +444,13 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                     <XAxis
                       dataKey="day"
-                      tick={{ fill: "var(--cms-text-secondary)", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
+                      tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
                       interval={4}
                     />
                     <YAxis
-                      tick={{ fill: "var(--cms-text-secondary)", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
+                      tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)}
@@ -486,7 +493,7 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                     <YAxis
                       type="category"
                       dataKey="name"
-                      tick={{ fill: "var(--cms-text-secondary)", fontSize: 11, fontFamily: "'Inter', sans-serif" }}
+                      tick={{ fill: "#a1a1aa", fontSize: 11, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
                       width={85}
