@@ -62,17 +62,15 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
         const res = await fetch("/api/queries");
         const json = await res.json();
         const items = Array.isArray(json) ? json : (json.data && Array.isArray(json.data)) ? json.data : [];
-        if (items.length > 0) {
-          setQueries(items);
-        } else {
-          // Default initial queries from projects
-          const initialQueries: QueryEntry[] = [
-            { id: "q1", question: "What is the architecture of AquaDot?", country: "India", time: "10 mins ago", exact: "2026-08-02 11:00 UTC", status: "unreviewed", likelyCategory: "aquadot" },
-            { id: "q2", question: "How does SmartFlow IV handle peristaltic pump safety?", country: "United States", time: "1 hour ago", exact: "2026-08-02 10:15 UTC", status: "unreviewed", likelyCategory: "smartflow" },
-            { id: "q3", question: "What technologies are used in ESP32-S3 Storage OS?", country: "Germany", time: "2 hours ago", exact: "2026-08-02 09:30 UTC", status: "resolved", likelyCategory: "esp32" },
-            { id: "q4", question: "Can Burfi Stock Manager run offline?", country: "India", time: "3 hours ago", exact: "2026-08-02 08:20 UTC", status: "resolved", likelyCategory: "burfi" },
-          ];
-          setQueries(initialQueries);
+        const finalItems = items.length > 0 ? items : [
+          { id: "q1", question: "What is the architecture of AquaDot?", country: "India", time: "10 mins ago", exact: "2026-08-02 11:00 UTC", status: "unreviewed", likelyCategory: "aquadot" },
+          { id: "q2", question: "How does SmartFlow IV handle peristaltic pump safety?", country: "United States", time: "1 hour ago", exact: "2026-08-02 10:15 UTC", status: "unreviewed", likelyCategory: "smartflow" },
+          { id: "q3", question: "What technologies are used in ESP32-S3 Storage OS?", country: "Germany", time: "2 hours ago", exact: "2026-08-02 09:30 UTC", status: "resolved", likelyCategory: "esp32" },
+          { id: "q4", question: "Can Burfi Stock Manager run offline?", country: "India", time: "3 hours ago", exact: "2026-08-02 08:20 UTC", status: "resolved", likelyCategory: "burfi" },
+        ];
+        setQueries(finalItems);
+        if (finalItems.length > 0 && !selected) {
+          setSelected(finalItems[0]);
         }
       } catch (e) {
         console.error("Failed to fetch queries", e);
@@ -164,7 +162,7 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
       {/* Two-column body */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Left: Query list */}
-        <div style={{ width: "45%", borderRight: "1px solid #1f1f22", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ width: 380, minWidth: 320, maxWidth: 440, borderRight: "1px solid #1f1f22", display: "flex", flexDirection: "column", overflow: "hidden", flexShrink: 0 }}>
           {/* List header */}
           <div style={{ height: 48, padding: "0 16px", borderBottom: "1px solid #1f1f22", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
             <div style={{ display: "flex", gap: 2, flex: 1 }}>
@@ -175,7 +173,7 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
                 </button>
               ))}
             </div>
-            <div style={{ position: "relative", width: 160 }}>
+            <div style={{ position: "relative", width: 140 }}>
               <Search size={11} style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "#71717a" }} />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..."
                 style={{ width: "100%", padding: "5px 8px 5px 24px", background: "rgba(255,255,255,0.03)", border: "1px solid #27272a", borderRadius: 6, color: "#fafafa", fontSize: 11, fontFamily: "'Inter', sans-serif", outline: "none", boxSizing: "border-box" }} />
@@ -196,10 +194,9 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
                   <div style={{ color: "#fafafa", fontSize: 13, lineHeight: "20px", marginBottom: 8, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                     {q.question}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 12, color: "#71717a" }}>{q.country}</span>
-                    <span style={{ fontSize: 12, color: "#71717a" }}>{q.time}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto", padding: "2px 8px", background: `${dot.color}12`, borderRadius: 12, border: `1px solid ${dot.color}28` }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <span style={{ fontSize: 11, color: "#71717a", whiteSpace: "nowrap" }}>{q.country} &middot; {q.time}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "2px 8px", background: `${dot.color}12`, borderRadius: 12, border: `1px solid ${dot.color}28`, flexShrink: 0 }}>
                       <span style={{ width: 5, height: 5, borderRadius: "50%", background: dot.color, display: "inline-block" }} />
                       <span style={{ fontSize: 11, color: dot.color }}>{dot.label}</span>
                     </div>
@@ -218,64 +215,68 @@ export function ChatbotAuditorScreen({ chatbotData, onSave }: { chatbotData: any
             </div>
           ) : (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ flex: 1, overflowY: "auto", padding: 24 }}>
-                {/* Query Context */}
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ color: "#a1a1aa", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>User Asked</div>
-                  <div style={{ color: "#fafafa", fontSize: 16, fontWeight: 600, lineHeight: "24px", marginBottom: 10 }}>{selected.question}</div>
-                </div>
-
-                {/* Target Project */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ color: "#a1a1aa", fontSize: 12, marginBottom: 6 }}>Target Project</div>
-                  <div style={{ position: "relative" }}>
-                    <select value={targetProject} onChange={(e) => setTargetProject(e.target.value)}
-                      style={{ width: "100%", padding: "9px 30px 9px 12px", background: "#18181b", border: "1px solid #27272a", borderRadius: 8, color: "#fafafa", fontSize: 13, fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer" }}>
-                      <option value="">Select project...</option>
-                      {Object.entries(PROJECTS_MAP).map(([key, label]) => (
-                        <option key={key} value={key}>{label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#71717a", pointerEvents: "none" }} />
+              <div style={{ flex: 1, overflowY: "auto", padding: 32 }}>
+                <div style={{ maxWidth: 880, margin: "0 auto" }}>
+                  {/* Query Context */}
+                  <div style={{ marginBottom: 28, background: "rgba(255,255,255,0.02)", border: "1px solid #27272a", borderRadius: 12, padding: "20px 24px" }}>
+                    <div style={{ color: "#a1a1aa", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>User Query</div>
+                    <div style={{ color: "#fafafa", fontSize: 17, fontWeight: 600, lineHeight: "26px", marginBottom: 6 }}>{selected.question}</div>
+                    <div style={{ color: "#71717a", fontSize: 12 }}>{selected.country} &middot; Received {selected.time}</div>
                   </div>
-                </div>
 
-                {/* Target Section */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ color: "#a1a1aa", fontSize: 12, marginBottom: 6 }}>Target Knowledge Section</div>
-                  <div style={{ position: "relative" }}>
-                    <select value={targetSection} onChange={(e) => setTargetSection(e.target.value)}
-                      style={{ width: "100%", padding: "9px 30px 9px 12px", background: "#18181b", border: "1px solid #27272a", borderRadius: 8, color: "#fafafa", fontSize: 13, fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer" }}>
-                      {SECTIONS.map((sec) => (
-                        <option key={sec.value} value={sec.value}>{sec.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={13} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#71717a", pointerEvents: "none" }} />
+                  {/* Target Project & Section Row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+                    <div>
+                      <div style={{ color: "#a1a1aa", fontSize: 12, fontWeight: 500, marginBottom: 8 }}>Target Project</div>
+                      <div style={{ position: "relative" }}>
+                        <select value={targetProject} onChange={(e) => setTargetProject(e.target.value)}
+                          style={{ width: "100%", padding: "10px 30px 10px 14px", background: "#18181b", border: "1px solid #27272a", borderRadius: 8, color: "#fafafa", fontSize: 13, fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer" }}>
+                          <option value="">Select project...</option>
+                          {Object.entries(PROJECTS_MAP).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#71717a", pointerEvents: "none" }} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div style={{ color: "#a1a1aa", fontSize: 12, fontWeight: 500, marginBottom: 8 }}>Knowledge Section</div>
+                      <div style={{ position: "relative" }}>
+                        <select value={targetSection} onChange={(e) => setTargetSection(e.target.value)}
+                          style={{ width: "100%", padding: "10px 30px 10px 14px", background: "#18181b", border: "1px solid #27272a", borderRadius: 8, color: "#fafafa", fontSize: 13, fontFamily: "'Inter', sans-serif", outline: "none", appearance: "none", cursor: "pointer" }}>
+                          {SECTIONS.map((sec) => (
+                            <option key={sec.value} value={sec.value}>{sec.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#71717a", pointerEvents: "none" }} />
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Section Content Editor */}
-                <div style={{ marginBottom: 18 }}>
-                  <div style={{ color: "#a1a1aa", fontSize: 12, marginBottom: 6 }}>Section Content</div>
-                  <textarea value={contentVal} onChange={(e) => setContentVal(e.target.value)}
-                    placeholder="Section content for the chatbot..." rows={8}
-                    style={{ width: "100%", minHeight: 180, padding: "10px 12px", background: "#18181b", border: "1px solid #27272a", borderRadius: 8, color: "#fafafa", fontSize: 13, fontFamily: "'Inter', sans-serif", outline: "none", resize: "vertical", lineHeight: "21px", boxSizing: "border-box" }} />
+                  {/* Section Content Editor */}
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ color: "#a1a1aa", fontSize: 12, fontWeight: 500, marginBottom: 8 }}>Section Content (Markdown &amp; Fact Base)</div>
+                    <textarea value={contentVal} onChange={(e) => setContentVal(e.target.value)}
+                      placeholder="Section content for the chatbot..." rows={9}
+                      style={{ width: "100%", minHeight: 200, padding: "14px 16px", background: "#18181b", border: "1px solid #27272a", borderRadius: 10, color: "#fafafa", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: "none", resize: "vertical", lineHeight: "22px", boxSizing: "border-box" }} />
+                  </div>
                 </div>
               </div>
 
               {/* Action Bar */}
-              <div style={{ padding: "16px 24px", borderTop: "1px solid #1f1f22", background: "#09090b", display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                <button onClick={handleCommit} disabled={committing || committed}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "11px", background: committed ? "rgba(16,185,129,0.15)" : "rgba(59,130,246,0.15)", border: `1px solid ${committed ? "rgba(16,185,129,0.3)" : "rgba(59,130,246,0.3)"}`, borderRadius: 8, color: committed ? "#10b981" : "#3b82f6", cursor: committing || committed ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, fontFamily: "'Inter', sans-serif", transition: "all 300ms" }}>
-                  {committed ? <Check size={14} /> : committing ? <RefreshCw size={14} style={{ animation: "spin 1s linear infinite" }} /> : null}
-                  {committed ? "Committed to chatbot.json" : committing ? "Committing..." : "Train Bot & Save Changes"}
+              <div style={{ padding: "16px 32px", borderTop: "1px solid #1f1f22", background: "#09090b", display: "flex", justifyContent: "flex-end", gap: 12, flexShrink: 0 }}>
+                <button onClick={handleArchive}
+                  style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 18px", background: "transparent", border: "1px solid #27272a", borderRadius: 8, color: "#a1a1aa", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "'Inter', sans-serif" }}
+                  className="hover:text-white hover:border-white/20">
+                  <Archive size={14} />
+                  Archive / Ignore
                 </button>
 
-                <button onClick={handleArchive}
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", padding: "9px", background: "transparent", border: "1px solid #27272a", borderRadius: 8, color: "#71717a", cursor: "pointer", fontSize: 13, fontFamily: "'Inter', sans-serif", transition: "color 150ms, border-color 150ms" }}
-                  className="hover:text-white hover:border-white/20">
-                  <Archive size={13} />
-                  Archive / Ignore
+                <button onClick={handleCommit} disabled={committing || committed}
+                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 24px", background: committed ? "rgba(16,185,129,0.2)" : "#2563eb", border: `1px solid ${committed ? "rgba(16,185,129,0.4)" : "#3b82f6"}`, borderRadius: 8, color: committed ? "#34d399" : "#ffffff", cursor: committing || committed ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
+                  {committed ? <Check size={15} /> : committing ? <RefreshCw size={15} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={15} />}
+                  {committed ? "Committed to chatbot.json" : committing ? "Committing..." : "Train Bot & Save Changes"}
                 </button>
               </div>
             </div>

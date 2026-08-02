@@ -260,12 +260,31 @@ function QuickAction({
 
 /* --- Main component ------------------------------------------- */
 
+/* --- Dynamic Traffic Data Generation (30 days up to today) --- */
+function generateDynamicTrafficData() {
+  const data = [];
+  const baseViews = [
+    320, 410, 380, 520, 480, 600, 720, 680, 590, 740,
+    820, 900, 860, 780, 920, 1050, 980, 1120, 1080, 1200,
+    1350, 1280, 1190, 1400, 1320, 1500, 1620, 1580, 1700, 1880
+  ];
+  const now = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(now.getDate() - i);
+    const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    data.push({ day: dayLabel, views: baseViews[29 - i] });
+  }
+  return data;
+}
+
 export function AnalyticsDashboard() {
   const { siteDocument } = useMakeStore();
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuildDone, setRebuildDone] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const trafficData = generateDynamicTrafficData();
   const projectsCount = siteDocument?.projects?.length || 9;
   const skillsCount = (siteDocument?.skills || []).reduce((acc: number, c: any) => acc + (c.skills?.length || 0), 0) || 32;
   const categoriesCount = siteDocument?.skills?.length || 6;
@@ -289,11 +308,12 @@ export function AnalyticsDashboard() {
         paddingTop: 60,
         height: "100vh",
         overflowY: "auto",
+        overflowX: "hidden",
         background: "var(--cms-bg-obsidian)",
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      <div style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto" }}>
+      <div style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }}>
         {/* Page title */}
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ color: "var(--cms-text-primary)", fontSize: 22, fontWeight: 700, margin: "0 0 4px", letterSpacing: "-0.01em" }}>
@@ -305,7 +325,7 @@ export function AnalyticsDashboard() {
         </div>
 
         {/* KPI Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 24 }}>
           <KpiCard
             title="Projects Shipped"
             value={`${projectsCount} Active`}
@@ -332,7 +352,7 @@ export function AnalyticsDashboard() {
         </div>
 
         {/* Main grid: chart + sidebar */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginBottom: 20 }}>
           {/* Neon traffic chart */}
           <GlassCard>
             <div style={{ padding: "22px 24px 12px" }}>
@@ -365,7 +385,7 @@ export function AnalyticsDashboard() {
 
               <div style={{ height: 220 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={TRAFFIC_DATA} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
+                  <AreaChart data={trafficData} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                     <XAxis
                       dataKey="day"
