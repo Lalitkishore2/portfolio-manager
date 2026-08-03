@@ -15,6 +15,46 @@
 
 ---
 
+## ⚡ Current System State (as of Aug 2026)
+
+> Keep this section updated when significant changes happen.
+
+### What is working right now
+- ✅ CMS runs at `http://localhost:3000` — login password in `.env.local` → `ADMIN_PASSWORD`
+- ✅ All content sections save correctly (dual-write: local file + GitHub commit)
+- ✅ Design Tokens page saves `tokens.json` and updates the portfolio theme
+- ✅ Analytics dashboard shows **"Live Website Data (GA4)"** badge — GA4 API is connected
+- ✅ GA4 shows 0 rows for traffic — **this is expected** (property is new, no historical data yet; chart will fill as visitors arrive)
+- ✅ Make AI Studio works with Gemini, Groq, NVIDIA, Ollama, OpenRouter
+- ✅ Portfolio site live at `https://lalitkishore.is-a.dev` (deployed via GitHub Pages)
+
+### Known limitations
+- ⚠️ GA4 traffic data: 0 rows is **not a bug** — the GA4 property was just connected. Data accumulates going forward.
+- ⚠️ GitHub token (`CMS_GITHUB_TOKEN`) may expire — if saves fail with 401, regenerate the token at https://github.com/settings/tokens and update `.env.local`
+- ⚠️ Next.js **does not hot-reload `.env.local`** — after any env change, kill the server and restart with `npm run dev`
+
+### How to restart the dev server (Windows)
+```powershell
+# Find and kill the process on port 3000
+netstat -ano | findstr :3000
+# Look for the PID in the last column (e.g. 13100)
+Stop-Process -Id <PID> -Force
+
+# Restart
+cd C:\Users\LALITKO\Desktop\projects\PORTFOLIO-MANAGER
+npm run dev
+```
+
+### Local file paths that matter
+```
+C:\Users\LALITKO\Desktop\projects\PORTFOLIO-MANAGER\   ← CMS (this repo)
+C:\Users\LALITKO\Desktop\projects\PORTFOLIO\           ← Public site
+C:\Users\LALITKO\Desktop\projects\PORTFOLIO\content\  ← JSON database (written by CMS)
+```
+
+---
+
+
 ## Architecture at a Glance
 
 ```
