@@ -1,63 +1,165 @@
-# Developer Onboarding
+# Portfolio Manager CMS — Onboarding Guide
 
-Welcome to the Portfolio Manager repository. This guide covers how to set up the CMS locally and successfully configure the external integrations.
+This guide covers everything needed to get the CMS running from scratch.
 
-## 1. Local Environment Setup
+---
 
-### System Requirements
-- OS: Windows, macOS, or Linux
-- Runtime: Node.js (v18.x or newer). Node.js v22.x is recommended.
-- Package Manager: `npm` (v9 or newer).
+## Prerequisites
 
-### Installation
-Clone the repository and install dependencies. Note that `--legacy-peer-deps` must be supplied to bypass strict peer dependency conflicts with the Shadcn UI library.
+- **Node.js** v18 or higher (v22 recommended)
+- **Git** installed
+- A **GitHub Personal Access Token** (PAT) with `repo` scope
+- At least one **AI provider API key** (Gemini is recommended and free-tier available)
+
+---
+
+## Step 1: Clone & Install
+
 ```bash
+git clone https://github.com/Lalitkishore2/portfolio-manager.git
+cd portfolio-manager
 npm install --legacy-peer-deps
 ```
-Install the Playwright browser binaries for testing:
-```bash
-npx playwright install
-```
 
-## 2. Environment Configuration
+> The `--legacy-peer-deps` flag is required for some UI component dependencies.
 
-You must create a `.env.local` file in the root of the project to run the application locally.
+---
 
-### Required Variables
+## Step 2: Configure Environment
 
-1. **`ADMIN_PASSWORD`**: A secure string used to authenticate locally and in production. The Next.js middleware restricts access to the dashboard unless a valid session cookie derived from this password exists.
-2. **`GITHUB_REPO`**: The target repository in the format `Owner/RepoName` (e.g., `octocat/portfolio`).
-3. **`GITHUB_BRANCH`**: The target branch, usually `main`.
-4. **`GITHUB_TOKEN`**: A GitHub Personal Access Token (PAT).
+Create a `.env.local` file in the root of `PORTFOLIO-MANAGER`:
 
-### Generating a GitHub PAT
-To allow the CMS to read and write to your repository:
-1. Navigate to GitHub > Settings > Developer Settings > Personal Access Tokens > Tokens (classic).
-2. Click **Generate new token**.
-3. Under Scopes, select `repo` (Full control of private repositories).
-4. Generate the token and paste it into your `.env.local` file.
-
-Example `.env.local`:
 ```env
-ADMIN_PASSWORD="super_secure_password"
-GITHUB_REPO="YourName/YourRepo"
+# ── GitHub (REQUIRED) ──────────────────────────────────────────────────────
+GITHUB_REPO="Lalitkishore2/portfolio"
+CMS_GITHUB_TOKEN="ghp_..."         # PAT with repo:read + repo:write scope
 GITHUB_BRANCH="main"
-GITHUB_TOKEN="ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+# ── CMS Auth (REQUIRED) ────────────────────────────────────────────────────
+ADMIN_PASSWORD="your-secure-password"
+
+# ── AI Providers (at least one required for Make Studio) ───────────────────
+GEMINI_API_KEY="AIza..."           # https://aistudio.google.com/app/apikey
+GROQ_API_KEY="gsk_..."            # https://console.groq.com
+NVIDIA_API_KEY="nvapi-..."        # https://build.nvidia.com
+OPENROUTER_API_KEY="sk-or-v1-..."
+OLLAMA_CLOUD_URL="https://api.ollamacloud.io"
+OLLAMA_CLOUD_API_KEY="..."
+
+# ── Google Analytics GA4 (OPTIONAL) ────────────────────────────────────────
+# Enables real traffic data in the Analytics dashboard
+# See "GA4 Setup" section below for how to get these values
+GA_PROPERTY_ID="507163958"
+GA_CLIENT_EMAIL="analytics-api-reader@your-project.iam.gserviceaccount.com"
+GA_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"
+
+# ── Portfolio Dev Server ────────────────────────────────────────────────────
+ASTRO_PREVIEW_URL="http://localhost:4321"
+DEFAULT_AI_MODEL="gemini"
 ```
 
-## 3. Development Workflow
+---
 
-Start the development server:
+## Step 3: Run
+
 ```bash
+# Terminal 1 — CMS
 npm run dev
+# → http://localhost:3000
+
+# Terminal 2 — Portfolio site (for live preview in CMS iframe)
+cd ../PORTFOLIO
+npm run dev
+# → http://localhost:4321
 ```
 
-Navigate to `http://localhost:3000`. You will be immediately redirected to the `/login` page. Enter the `ADMIN_PASSWORD` to gain entry to the dashboard.
+Open http://localhost:3000, enter your `ADMIN_PASSWORD` to log in.
 
-## 4. Testing
+---
 
-Ensure changes to the API handlers or components are strictly validated before deployment.
+## GitHub PAT Setup
+
+1. Go to https://github.com/settings/tokens
+2. Click **Generate new token (classic)**
+3. Select scopes: `repo` (full control of private repositories)
+4. Set expiration as needed
+5. Copy the token → paste into `.env.local` as `CMS_GITHUB_TOKEN`
+
+---
+
+## GA4 Analytics Setup
+
+To enable real traffic data in the Analytics dashboard:
+
+### 1. Create a Google Cloud Project
+- Go to https://console.cloud.google.com
+- Create a new project (or use existing)
+
+### 2. Enable the API
+- Navigate to **APIs & Services → Library**
+- Search for **"Google Analytics Data API"**
+- Click **Enable**
+
+### 3. Create a Service Account
+- Go to **APIs & Services → Credentials**
+- Click **Create Credentials → Service Account**
+- Name it (e.g., `analytics-api-reader`)
+- Skip role assignment (not needed at this level)
+- Click **Done**
+
+### 4. Create a Key
+- Click the service account → **Keys → Add Key → Create new key → JSON**
+- Download the JSON key file
+- From the file, copy:
+  - `client_email` → `GA_CLIENT_EMAIL`
+  - `private_key` → `GA_PRIVATE_KEY` (the full `-----BEGIN PRIVATE KEY-----...` block)
+
+### 5. Grant Access in GA4
+- Open https://analytics.google.com
+- Go to **Admin → Property Access Management**
+- Click **+** → Add users
+- Enter the service account email
+- Set role to **Viewer**
+- Click **Add**
+
+### 6. Get Property ID
+- In GA4 Admin → **Property Settings**
+- Copy the **Property ID** (numeric only, e.g. `507163958`)
+- Set as `GA_PROPERTY_ID` in `.env.local`
+
+> **Note:** GA4 data may show 0 rows for newly created properties until visitors are tracked. The dashboard will still show `"Live Website Data (GA4)"` badge confirming the connection is working.
+
+---
+
+## Troubleshooting
+
+### "Failed to save" when saving content
+- Check that `CMS_GITHUB_TOKEN` is set and has `repo` write access
+- Verify `GITHUB_REPO` is correct (format: `username/repo`)
+- Check the terminal for `[DEBUG] Fetching ...` logs
+
+### Analytics shows "Mock Data"
+- Verify `GA_PROPERTY_ID`, `GA_CLIENT_EMAIL`, and `GA_PRIVATE_KEY` are all set
+- Check that the service account has been added to GA4 with Viewer role
+- Restart the dev server after updating `.env.local` (Next.js doesn't hot-reload env changes)
+
+### CMS redirects to /login after saving
+- The session cookie may have expired; log in again
+- Ensure `ADMIN_PASSWORD` hasn't changed between server restarts
+
+### AI Make shows no response
+- Verify the API key for your selected model is set correctly
+- Try switching models in Settings
+- Check browser console for API errors
+
+---
+
+## Testing
+
 ```bash
+# Unit + integration tests
 npm run test
+
+# End-to-end browser tests
 npx playwright test
 ```

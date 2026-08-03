@@ -1,50 +1,190 @@
-# Architecture Guide
+# Portfolio Manager CMS — Architecture Guide
 
-The Portfolio Manager acts as a Headless Content Management System (CMS) and AI Generation Studio, built on Next.js 16 (App Router).
+## Component Architecture
 
-## System Design
-
-This CMS operates without a traditional SQL or NoSQL database. Instead, it relies on an external GitHub repository acting as the content data layer. Decoupling the administration panel from the static frontend provides:
-1. Complete static-site generation (SSG) for the portfolio frontend, ensuring maximum page speed and security.
-2. Zero database infrastructure maintenance or hosting costs.
-3. Native version control and audit history for all content updates via Git commits.
-
-```mermaid
-flowchart LR
-    User([CMS User]) --> CommandBar[MakeCommandBar / UI]
-    CommandBar --> MakeStore[Zustand makeStore]
-    MakeStore -->|Local Patch| Canvas[Iframe Live Canvas Preview]
-    MakeStore -->|HTTP POST| APIRoutes[Next.js Route Handlers]
-    APIRoutes -->|Save Content| GitHub[GitHub REST API]
-    APIRoutes -->|Generate Patch| AIProviders[AI Engines Gemini/Groq/Ollama/NVIDIA]
-    GitHub -->|Trigger Webhook| Frontend[Portfolio Frontend]
+```
+App.tsx (CMS shell + client-side router)
+├── CMSSidebar.tsx          ← Left sidebar navigation (collapsed icon / expanded text)
+│
+├── ProjectList.tsx         ← Grid view of all projects
+├── ProjectEditor.tsx       ← Full CRUD editor for a single project
+│   └── ProjectEditorComponents.tsx  ← Sub-components (tech tags, metrics, nodes)
+│
+├── ProfilePage.tsx         ← Profile/bio editor (name, tagline, socials, ticker)
+├── SkillsPage.tsx          ← Skills category + tags editor
+├── ExperiencePage.tsx      ← Timeline entries editor
+├── TokensPage.tsx          ← Design tokens (colors + fonts)
+│
+├── MakePage.tsx            ← AI Make Studio canvas
+│   ├── AiMakeBar.tsx       ← Floating pill command input (bottom center)
+│   └── DockedChatPanel.tsx ← Right chat panel with message history + Accept/Discard
+│
+├── AnalyticsDashboard.tsx  ← GA4 traffic chart + git activity + KPI cards
+├── ChatbotAuditorScreen.tsx← Visitor query review + resolve
+│
+└── SettingsPage.tsx        ← Runtime settings (AI model, API keys, env info)
 ```
 
-## Component & State Architecture
+---
 
-- **Framework**: Next.js 16 (App Router) + TypeScript.
-- **UI Components**: Tailwind CSS, Shadcn UI primitives, custom `FigmaCard` & `FigmaInput` components.
-- **Global State Management**: `useMakeStore` (`src/store/makeStore.ts`) powered by Zustand with `persist` middleware.
-  - Manages `siteDocument` (the full content tree), `ghostDiff` (uncommitted AI patches), `generationState`, `chatOpen`, and `versions`.
+## State Machine: Zustand Store (`makeStore.ts`)
 
-## Data Integration & Persistence Pipeline
+### Key State Fields
 
-All content mutations follow a safe 2-step write pipeline:
+| Field | Type | Purpose |
+|-------|------|---------|
+| `siteDocument` | `object` | Full content object `{ projects, profile, skills, experience }` |
+| `generationState` | `"idle" \| "generating" \| "result"` | AI generation phase |
+| `ghostDiff` | `{ before: any, after: any } \| null` | Uncommitted AI proposal |
+| `chatOpen` | `boolean` | Whether DockedChatPanel is visible |
+| `versions` | `Version[]` | Version history array `{ id, timestamp, label, data }` |
+| `targetSection` | `string` | Which section the AI is currently editing |
 
-### 1. Transient Live Preview
-- When an AI prompt is processed by `/api/make`, the API returns a structured JSON patch.
-- The CMS stores the original content in `ghostDiff.before` and the patch in `ghostDiff.after`.
-- `siteDocument` is updated in local Zustand memory ONLY, triggering an iframe reload. The user sees the visual change on the canvas in real time.
+### addVersion Safety Rule
 
-### 2. GitHub REST Commit (`src/lib/github.ts`)
-When the user clicks `[✓ Accept]` (or saves a manual form edit):
-1. The client sends a `POST` request to the target endpoint (e.g., `/api/projects`).
-2. The route handler validates the payload and calls `saveContentJSON`.
-3. `saveContentJSON` fetches the current SHA of the file in GitHub, base64-encodes the JSON, and issues a `PUT` request to commit the change to `GITHUB_BRANCH`.
-4. GitHub Actions builds and deploys the updated portfolio static site.
+```typescript
+// CORRECT: prevents key collisions after deletes
+const newId = Math.max(...versions.map(v => v.id), 0) + 1;
 
-### Reversion Mechanism
-If the user clicks `[Discard]`:
-- The store restores `siteDocument` to `ghostDiff.before` and clears `ghostDiff`.
-- No HTTP request is sent to GitHub, ensuring no unwanted commits or build triggers occur.
+// WRONG: breaks if versions have been deleted
+const newId = versions.length + 1;
+```
 
+---
+
+## Data Flow: Content Read/Write
+
+### Read (GET)
+
+```
+CMS page mounts
+       │
+       ▼
+fetch("/api/{section}")
+       │
+       ▼
+route-helper.ts GET handler
+       │
+       ├─► Check local file: PORTFOLIO/content/{file}.json
+       │     ↳ If exists: return immediately (fast, avoids GitHub rate limit)
+       │
+       └─► Fallback: GitHub API GET /repos/{repo}/contents/content/{file}.json
+               ↳ If 404: return safe empty default ({} or [])
+```
+
+### Write (POST)
+
+```
+User clicks Save
+       │
+       ▼
+fetch("/api/{section}", { method: "POST", body: JSON.stringify({ data, sha }) })
+       │
+       ▼
+route-helper.ts POST handler
+       │
+       ├─► 1. fs.writeFileSync(localPath)     ← instant local update
+       │
+       └─► 2. GitHub API PUT /repos/{repo}/contents/content/{file}.json
+               ├── base64-encoded content
+               ├── commit message: "cms: update {label}"
+               └── sha: required to prevent overwrite conflicts
+```
+
+---
+
+## GitHub API Service (`github.ts`)
+
+### Functions
+
+| Function | Purpose |
+|----------|---------|
+| `getFile(path)` | Raw file fetch from repo |
+| `getContentJSON(filename)` | Parse JSON from content/ directory, returns `{ data, sha }` |
+| `saveContentJSON(filename, data, message, sha)` | Commit JSON to content/ directory |
+| `listFiles(dir)` | List files in a directory |
+| `uploadImage(path, base64, sha?)` | Upload/replace a binary file |
+
+### Auth
+
+Uses `CMS_GITHUB_TOKEN` or `GITHUB_TOKEN` env var. Token must have `repo` scope (full read/write).
+
+---
+
+## Authentication (`middleware.ts`)
+
+```
+Every request
+       │
+       ▼
+Does ADMIN_PASSWORD env var exist?
+       │
+       ├─► No → bypass (dev mode with no password set)
+       │
+       └─► Yes → check request.cookies["cms_session"]
+               │
+               ├─► === ADMIN_PASSWORD → allow
+               │
+               └─► !== ADMIN_PASSWORD → redirect to /login
+                       (except /login and /api/auth/* routes)
+```
+
+---
+
+## AI Make Pipeline (`/api/make`)
+
+### Request
+
+```typescript
+{
+  prompt: string,           // User's instruction
+  section: string,          // e.g. "projects", "profile"
+  currentData: any,         // Current section JSON
+  model?: string            // "gemini" | "groq" | "nvidia" | "ollama" | "openrouter"
+}
+```
+
+### Response
+
+```typescript
+{
+  ok: true,
+  patch: any,               // Updated section JSON (full replacement or partial patch)
+  reasoning: string[]       // Step-by-step reasoning trail shown in chat panel
+}
+```
+
+### Provider Selection
+
+Checked in order: `model` param → `DEFAULT_AI_MODEL` env → `"gemini"`.  
+Each provider uses `jsonrepair` to recover malformed AI JSON responses.
+
+---
+
+## Analytics Route (`/api/analytics`)
+
+### Response
+
+```typescript
+{
+  ok: true,
+  trafficData: Array<{ day: string, views: number }>,  // Last 30 days (or 14 placeholders)
+  trafficSource: "GA4" | "GitHub" | "MOCK",
+  commits: Array<{ hash, message, relativeTime, date }>,
+  categoryStats: Array<{ name, value, count }>,
+  unresolvedQueries: number,
+  resolvedQueries: number,
+  totalQueries: number,
+  coverageRate: number,
+  lastSync: string
+}
+```
+
+### GA4 Setup
+
+1. Create a Google Cloud service account
+2. Enable the Google Analytics Data API
+3. Grant the service account `Viewer` role in GA4 Admin → Property Access Management
+4. Download the JSON key file
+5. Copy `client_email` and `private_key` to `.env.local` as `GA_CLIENT_EMAIL` and `GA_PRIVATE_KEY`
+6. Set `GA_PROPERTY_ID` to your GA4 property ID (numeric only, e.g. `507163958`)

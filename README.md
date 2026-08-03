@@ -1,95 +1,134 @@
 # Portfolio Manager CMS
 
-A Next.js administration panel and AI generation studio designed to manage and validate updates to the Deconstructivist Portfolio content database.
+A Next.js 15 administration panel and AI generation studio for managing the [Deconstructivist Portfolio](https://lalitkishore.is-a.dev) — built by S V Lalitkishore.
 
-## Key Features
+> **Full system guide:** [`docs/END_TO_END.md`](./docs/END_TO_END.md)  
+> **AI agent context:** [`AGENTS.md`](./AGENTS.md)
 
-- **Figma AI Design Standard**: Modeled after Figma Make AI interactions featuring a floating bottom command bar (`MakeCommandBar`) and a docked right chat panel (`DockedChatPanel`).
-- **Live Canvas Preview**: Real-time live previews directly inside the visual canvas iframe prior to persistence.
-- **Non-Destructive Write Flow**: AI-generated JSON patches are previewed locally with sticky Accept/Discard controls, avoiding accidental or corrupted database commits.
-- **Decoupled Architecture**: Directly manages JSON content files (`projects.json`, `profile.json`, `skills.json`, `experience.json`, `chatbot.json`) in a remote GitHub repository.
-- **Multi-Provider AI Engine**: Supports Gemini Flash, Groq Llama 3.3, NVIDIA Llama 3.1, Ollama (Qwen 2.5 Coder), and OpenRouter.
+---
 
-## Architecture Overview
+## Features
 
-```mermaid
-flowchart TD
-    subgraph Frontend [Portfolio Manager CMS]
-        UI[React UI / Tailwind]
-        Zustand[Zustand Store makeStore]
-        Pill[MakeCommandBar]
-        Dock[DockedChatPanel]
-        Preview[Live Canvas Iframe Preview]
-        UI <--> Zustand
-        Pill --> Zustand
-        Zustand <--> Dock
-        Zustand <--> Preview
-    end
+- **Content Management** — Edit projects, profile, skills, experience, and chatbot knowledge via a rich CMS UI
+- **AI Make Studio** — Figma-style AI content generation with live preview and Accept/Discard controls (Gemini, Groq, NVIDIA, Ollama, OpenRouter)
+- **Live Canvas Preview** — Real-time iframe preview of the portfolio site before committing changes
+- **Non-Destructive Writes** — AI patches are previewed in memory; only committed when explicitly accepted
+- **Design Tokens** — Edit the site color palette and font theme; changes propagate to the public site at next build
+- **Analytics Dashboard** — Live GA4 traffic chart, real git commit history, project/skill counts
+- **Chatbot Auditor** — Review and resolve visitor chatbot queries
+- **GitHub Integration** — All content stored as JSON files in the portfolio repo; committed via GitHub REST API
 
-    subgraph Backend [Next.js API Routes]
-        Auth[Auth Service]
-        GHAPI[GitHub API Service]
-        AIAgents[/api/make Route Handler]
-    end
+---
 
-    subgraph Storage [GitHub Repository]
-        JSON[(JSON Database)]
-        Assets[Static Images / Files]
-    end
-    
-    subgraph Client [Portfolio Site]
-        Astro[Portfolio Frontend Astro / Next]
-    end
+## Architecture
 
-    UI -- HTTP --> Backend
-    AIAgents -- HTTP --> ExternalAI[External AI Providers Gemini / Groq / Ollama / NVIDIA]
-    GHAPI -- Commits JSON --> Storage
-    Storage -- Triggers SSG Build --> Client
+```
+Browser (CMS UI)
+     │ React/Zustand
+     ▼
+Next.js 15 (App Router)          http://localhost:3000
+     │ API routes (/api/*)
+     ├──► GitHub REST API  ──►  content/*.json  (the database)
+     ├──► AI Providers     ──►  JSON patch generation
+     ├──► GA4 Data API     ──►  Traffic analytics
+     └──► Git (local)      ──►  Commit history feed
+
+GitHub Repository (Lalitkishore2/portfolio)
+     │ content/*.json changes trigger:
+     ▼
+GitHub Actions  ──►  Astro Build  ──►  GitHub Pages  ──►  lalitkishore.is-a.dev
 ```
 
-## Documentation
-
-Comprehensive documentation is available in the `docs/` directory:
-- [Architecture Guide](./docs/ARCHITECTURE.md) - Details on serverless architecture, state machines, and GitHub API integration.
-- [Figma AI Workflow & UX Specification](./docs/FIGMA_AI_WORKFLOW.md) - Specifications for the Figma Make design system, live preview machine, and chat panel.
-- [API Reference](./docs/API.md) - Schema definitions for `/api/make` and internal Next.js Route Handlers.
-- [Onboarding & Environment Setup](./docs/ONBOARDING.md) - Instructions for configuring environment variables and local testing.
-- [Agent System Guide](./AGENTS.md) - Context guide for AI agents working on this codebase.
+---
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js (v18 or higher, v22 recommended)
-- A GitHub Personal Access Token (PAT)
+- Node.js 18+ (v22 recommended)
+- GitHub PAT with `repo` scope (read + write)
+- At least one AI provider API key (Gemini recommended)
 
 ### Installation
-Clone the repository and install dependencies (note the legacy peer dependencies flag required for UI components):
+
 ```bash
+git clone https://github.com/Lalitkishore2/portfolio-manager.git
+cd portfolio-manager
 npm install --legacy-peer-deps
 ```
 
-### Local Development
-Start the local development server:
+### Configure Environment
+
+Copy the template and fill in your values:
+
+```bash
+# Create .env.local with:
+GITHUB_REPO="Lalitkishore2/portfolio"
+CMS_GITHUB_TOKEN="ghp_..."
+GITHUB_BRANCH="main"
+ADMIN_PASSWORD="your-secure-password"
+GEMINI_API_KEY="AIza..."
+ASTRO_PREVIEW_URL="http://localhost:4321"
+```
+
+See [`docs/ONBOARDING.md`](./docs/ONBOARDING.md) for the full environment variable list including GA4 analytics setup.
+
+### Run
+
 ```bash
 npm run dev
+# CMS: http://localhost:3000
 ```
-The CMS will be available at `http://localhost:3000`.
 
-## Deployment
+Also run the portfolio dev server in a separate terminal for live preview:
+```bash
+cd ../PORTFOLIO && npm run dev
+# Portfolio: http://localhost:4321
+```
 
-This project is configured for serverless deployment on Vercel:
-1. Import the repository via the Vercel dashboard.
-2. Set the root directory configuration to the main project folder.
-3. Configure the strictly required environment variables (`GITHUB_TOKEN`, `GITHUB_REPO`, `GITHUB_BRANCH`, `ADMIN_PASSWORD`).
-4. Deploy the application.
+---
+
+## Project Structure
+
+```
+src/
+├── app/api/         ← 14 Next.js API route handlers
+├── components/cms/  ← All CMS UI pages and components
+├── lib/
+│   ├── github.ts        ← GitHub REST API service
+│   ├── route-helper.ts  ← Reusable dual-write content route factory
+│   └── logger.ts        ← Structured logging
+├── store/makeStore.ts   ← Zustand state (siteDocument, AI state, versions)
+└── middleware.ts        ← Cookie auth guard
+```
+
+---
+
+## Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [`docs/END_TO_END.md`](./docs/END_TO_END.md) | **Start here** — Full system flow from CMS edit to live site |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Component architecture, state machine, data flow diagrams |
+| [`docs/API.md`](./docs/API.md) | All 14 API routes with request/response schemas |
+| [`docs/ONBOARDING.md`](./docs/ONBOARDING.md) | Environment setup, GA4 configuration, first run |
+| [`AGENTS.md`](./AGENTS.md) | AI agent context guide — rules, gotchas, patterns |
+
+---
 
 ## Testing
 
-This project utilizes Vitest and Playwright to ensure the stability of the API routes and UI.
 ```bash
-# Run Unit and Integration tests
-npm run test
-
-# Run End-to-End Browser tests
-npx playwright test
+npm run test          # Vitest unit + integration tests
+npx playwright test   # E2E browser tests
 ```
+
+---
+
+## Deployment
+
+This CMS is designed to run **locally only** (never deployed publicly). It manages a remote portfolio site deployed on GitHub Pages.
+
+To run from a different machine:
+1. Clone this repo
+2. Configure `.env.local` (see [ONBOARDING.md](./docs/ONBOARDING.md))
+3. `npm run dev`
