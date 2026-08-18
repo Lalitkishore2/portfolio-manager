@@ -110,7 +110,7 @@ export const useMakeStore = create<MakeState>()(
       
       leftOpen: true,
       setLeftOpen: (open) => set({ leftOpen: open }),
-      rightOpen: true,
+      rightOpen: false,
       setRightOpen: (open) => set({ rightOpen: open }),
       previewMode: "desktop",
       setPreviewMode: (mode) => set({ previewMode: mode }),

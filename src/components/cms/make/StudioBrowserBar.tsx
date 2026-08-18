@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Eye, Code2, ChevronLeft, ChevronRight, RotateCw, Monitor, Tablet, Smartphone,
-  Sliders, Settings, Play, Share2, Check, ExternalLink, ChevronDown, Lock, Maximize2
+  Sliders, Settings, Play, Share2, Check, ExternalLink, ChevronDown, Lock, Sparkles
 } from 'lucide-react';
 import { useMakeStore } from '@/store/makeStore';
 
@@ -32,6 +32,7 @@ export function StudioBrowserBar({
 
   const [inputUrl, setInputUrl] = useState(currentPath);
   const [zoomMenuOpen, setZoomMenuOpen] = useState(false);
+  const [deviceMenuOpen, setDeviceMenuOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [published, setPublished] = useState(false);
 
@@ -60,31 +61,32 @@ export function StudioBrowserBar({
 
   return (
     <header className="h-12 bg-[#1E1E1E] border-b border-white/[0.08] px-3 flex items-center justify-between shrink-0 select-none z-20 gap-3 text-zinc-200">
-      {/* 1. Left: View Mode Switcher [ 👁 | ⟨/⟩ ] */}
-      <div className="flex items-center gap-1 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5 shrink-0 shadow-inner">
+      {/* 1. Left View Switcher [ 👁 | ⟨/⟩ ] */}
+      <div className="flex items-center gap-1 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5 shrink-0">
         <button
           onClick={() => setIsCodeView(false)}
-          className={`p-1.5 rounded-md transition-all cursor-pointer ${
-            !isCodeView ? "bg-[#1E1E1E] text-white shadow-sm" : "text-zinc-400 hover:text-white"
+          className={`px-2 py-1 rounded-md text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            !isCodeView ? "bg-[#1E1E1E] text-white shadow-sm font-semibold" : "text-zinc-400 hover:text-white"
           }`}
-          title="Preview Canvas (Eye)"
+          title="Preview"
         >
           <Eye size={13} />
+          <span className="text-[11px] hidden sm:inline">Preview</span>
         </button>
         <button
           onClick={() => setIsCodeView(true)}
-          className={`p-1.5 rounded-md transition-all cursor-pointer ${
-            isCodeView ? "bg-[#1E1E1E] text-[#0D99FF] shadow-sm font-bold" : "text-zinc-400 hover:text-white"
+          className={`px-2 py-1 rounded-md text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+            isCodeView ? "bg-[#1E1E1E] text-[#0D99FF] shadow-sm font-semibold" : "text-zinc-400 hover:text-white"
           }`}
-          title="Code & Schema View (</>)"
+          title="Code"
         >
           <Code2 size={13} />
+          <span className="text-[11px] hidden sm:inline">Code</span>
         </button>
       </div>
 
-      {/* 2. Center: Browser URL Address Bar with < > ↻ */}
-      <div className="flex-1 max-w-xl flex items-center gap-1.5 min-w-0">
-        {/* Navigation Arrows */}
+      {/* 2. Center: Browser URL Address Bar with < > ↻ and / */}
+      <div className="flex-1 max-w-md flex items-center gap-1.5 min-w-0">
         <button
           onClick={() => window.history.back()}
           className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer hidden sm:block"
@@ -102,14 +104,14 @@ export function StudioBrowserBar({
         <button
           onClick={onReload}
           className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
-          title="Reload canvas"
+          title="Reload"
         >
           <RotateCw size={12} />
         </button>
 
-        {/* Live URL Input Bar (Exact Figma Make URL Pill) */}
+        {/* Real URL address pill */}
         <form onSubmit={handleUrlSubmit} className="flex-1 min-w-0">
-          <div className="w-full h-7 bg-[#141414] hover:bg-[#181818] focus-within:bg-[#181818] border border-white/[0.08] focus-within:border-[#0D99FF]/50 rounded-lg px-2.5 flex items-center gap-1.5 text-xs text-zinc-300 transition-colors shadow-inner">
+          <div className="w-full h-7 bg-[#141414] hover:bg-[#181818] focus-within:bg-[#181818] border border-white/[0.08] focus-within:border-[#0D99FF]/50 rounded-lg px-2.5 flex items-center gap-1.5 text-xs text-zinc-300 transition-colors">
             <Lock size={10} className="text-zinc-500 shrink-0" />
             <input
               type="text"
@@ -122,31 +124,43 @@ export function StudioBrowserBar({
         </form>
       </div>
 
-      {/* 3. Right Tools: Device Frames, Zoom, Inspector Toggle, Publish & Share */}
+      {/* 3. Right: Viewport frames, Zoom, Avatar, Settings, Play, Publish, Share */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Device Frames */}
-        <div className="hidden lg:flex items-center gap-0.5 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5">
-          {[
-            { mode: "desktop" as const, icon: Monitor, label: "1440" },
-            { mode: "tablet" as const, icon: Tablet, label: "768" },
-            { mode: "mobile" as const, icon: Smartphone, label: "390" }
-          ].map(({ mode, icon: Icon, label }) => (
-            <button
-              key={mode}
-              onClick={() => {
-                setPreviewMode(mode);
-                setAutoFitZoom(false);
-              }}
-              className={`px-2 py-1 rounded text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
-                previewMode === mode
-                  ? "bg-[#0D99FF] text-white font-semibold shadow-sm"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <Icon size={11} />
-              <span>{label}</span>
-            </button>
-          ))}
+        {/* Device Frame Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setDeviceMenuOpen(!deviceMenuOpen)}
+            className="flex items-center gap-1 px-2 py-1 bg-[#2C2C2C] hover:bg-[#363636] border border-white/[0.06] rounded-lg text-[11px] font-mono text-zinc-300 transition-colors cursor-pointer"
+            title="Device Viewport Preset"
+          >
+            {previewMode === "desktop" ? <Monitor size={12} /> : previewMode === "tablet" ? <Tablet size={12} /> : <Smartphone size={12} />}
+            <span className="capitalize hidden md:inline">{previewMode}</span>
+            <ChevronDown size={10} className="text-zinc-500" />
+          </button>
+
+          {deviceMenuOpen && (
+            <div className="absolute top-full mt-1 right-0 w-36 bg-[#2C2C2C] border border-white/10 rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5 text-xs">
+              {[
+                { mode: "desktop" as const, label: "Desktop (1440)", icon: Monitor },
+                { mode: "tablet" as const, label: "Tablet (768)", icon: Tablet },
+                { mode: "mobile" as const, label: "Mobile (390)", icon: Smartphone }
+              ].map(({ mode, label, icon: Icon }) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setPreviewMode(mode);
+                    setDeviceMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 transition-colors ${
+                    previewMode === mode ? "bg-[#0D99FF]/20 text-[#0D99FF] font-semibold" : "text-zinc-300 hover:bg-white/10"
+                  }`}
+                >
+                  <Icon size={12} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Zoom Dropdown */}
@@ -165,7 +179,7 @@ export function StudioBrowserBar({
                 onClick={() => { setAutoFitZoom(true); setZoomMenuOpen(false); }}
                 className="w-full text-left px-2 py-1 rounded text-zinc-300 hover:bg-white/10"
               >
-                Auto Fit
+                Fit
               </button>
               {[50, 75, 100, 125, 150].map((z) => (
                 <button
@@ -182,36 +196,45 @@ export function StudioBrowserBar({
           )}
         </div>
 
-        {/* Design Inspector Dock Toggle (Preserving extra design features) */}
+        {/* Inspector Toggle Button (To open extra tools when needed) */}
         <button
           onClick={() => {
             setRightOpen(!rightOpen);
             setInspectTab("properties");
           }}
-          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+          className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
             rightOpen
               ? "bg-[#0D99FF]/20 border-[#0D99FF]/40 text-[#0D99FF]"
               : "bg-[#2C2C2C] border-white/[0.06] text-zinc-400 hover:text-white"
           }`}
-          title="Toggle Design Inspector & Tokens Panel"
+          title="Toggle Inspector Dock"
         >
           <Sliders size={13} />
         </button>
 
-        {/* User Avatar Circle */}
+        {/* Avatar Circle */}
         <div className="w-6 h-6 rounded-full bg-emerald-600 border border-emerald-400 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
           S
         </div>
 
-        {/* Settings Button */}
+        {/* Settings */}
         <button className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer hidden xl:block">
           <Settings size={13} />
+        </button>
+
+        {/* Play Prototype Button */}
+        <button 
+          onClick={() => window.open("http://localhost:4321", "_blank")}
+          className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer hidden sm:block"
+          title="Open in new window"
+        >
+          <Play size={13} />
         </button>
 
         {/* Publish Button (Dark Outline Pill) */}
         <button
           onClick={handlePublish}
-          className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+          className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
             published
               ? "bg-emerald-600 text-white border-emerald-500 shadow-emerald-500/20"
               : "bg-[#2C2C2C] hover:bg-[#363636] border-white/15 text-zinc-200 hover:text-white shadow-sm"
@@ -220,12 +243,12 @@ export function StudioBrowserBar({
           {published ? "Published!" : "Publish"}
         </button>
 
-        {/* Share Button (Figma Blue Pill) */}
+        {/* Share Button (Signature Blue Pill) */}
         <button
           onClick={handleCopyShare}
-          className="px-3 py-1 bg-[#0D99FF] hover:bg-[#0080FF] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-[#0D99FF]/20 cursor-pointer active:scale-95"
+          className="px-3.5 py-1 bg-[#0D99FF] hover:bg-[#0080FF] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-[#0D99FF]/20 cursor-pointer active:scale-95"
         >
-          {copiedLink ? <Check size={12} /> : <Share2 size={12} />}
+          {copiedLink ? <Check size={12} /> : null}
           <span>{copiedLink ? "Copied" : "Share"}</span>
         </button>
       </div>
