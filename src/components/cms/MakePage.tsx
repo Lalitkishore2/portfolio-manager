@@ -1,30 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Eye, Sparkles } from "lucide-react";
 import { useMakeStore } from "../../store/makeStore";
-import { TopToolbar } from "./make/TopToolbar";
-import { LeftDock } from "./make/LeftDock";
-import { CanvasZone } from "./make/CanvasZone";
-import { RightDock, FigmaElement } from "./make/RightDock";
-import { AiMakeBar } from "./make/AiMakeBar";
-import { StatusBar } from "./make/StatusBar";
-import { SlideOverPanel } from "./make/SlideOverPanel";
+import { StudioTopBar } from "./make/StudioTopBar";
+import { StudioLeftTree } from "./make/StudioLeftTree";
+import { StudioCanvas } from "./make/StudioCanvas";
+import { StudioRightInspector } from "./make/StudioRightInspector";
+import { StudioStatusBar } from "./make/StudioStatusBar";
+import { FigmaElement } from "./make/types";
 
 interface MakePageProps {
   onBack: () => void;
 }
 
-function breadcrumbFromElement(el: FigmaElement | null): string[] {
-  if (!el) return [];
-  return ["Canvas", ...el.path.split(" > ").slice(-3).map(p => {
-    let clean = p.split(".")[0];
-    if (clean === "div" || clean === "section" || clean === "span" || clean === "h1" || clean === "h2" || clean === "p" || clean === "a") {
-      clean = p.split(".")[1] || clean;
-    }
-    return clean.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-  })];
-}
-
 export function MakePage({ onBack }: MakePageProps) {
-  // Store
+  // Store state
   const {
     siteDocument, setSiteDocument,
     selectedNodeId, setSelectedNodeId,
@@ -32,7 +21,7 @@ export function MakePage({ onBack }: MakePageProps) {
     generationState, setGenerationState,
     promptText, setPromptText,
     provider,
-    chatOpen, setChatOpen, setMessages,
+    setMessages,
     setGhostDiff,
     setAuditReport, setIsAuditing,
     setRightOpen, setInspectTab,
@@ -40,17 +29,16 @@ export function MakePage({ onBack }: MakePageProps) {
     pendingImage, setPendingImage
   } = useMakeStore();
 
-  // Local state for things that don't need to be in the store
-  const targetSection = selectedNodeId ? selectedNodeId.split('.')[0] : "projects";
+  // Local state
+  const [targetSection, setTargetSection] = useState<string>("projects");
   const [selectedFigmaElement, setSelectedFigmaElement] = useState<FigmaElement | null>(null);
   const [layerNodes, setLayerNodes] = useState<string[]>([]);
-  const [rawCode, setRawCode] = useState("");
-  const [settings, setSettings] = useState<any>(null);
+  const [rawCode, setRawCode] = useState<string>("");
+  const [mobileTab, setMobileTab] = useState<"preview" | "editor">("preview");
 
-  // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  /* ─── Effects ──────────────────────────────────────────────── */
+  /* ─── Fetch Initial Site Data ───────────────────────────────── */
 
   const fetchedRef = useRef(false);
   useEffect(() => {
@@ -58,26 +46,29 @@ export function MakePage({ onBack }: MakePageProps) {
     fetchedRef.current = true;
     async function fetchAll() {
       try {
-        const [pr, pf, sk, ex, st] = await Promise.all([
+        const [pr, pf, sk, ex, cb, tk] = await Promise.all([
           fetch("/api/projects"), fetch("/api/profile"),
           fetch("/api/skills"), fetch("/api/experience"),
-          fetch("/api/settings")
+          fetch("/api/chatbot"), fetch("/api/tokens")
         ]);
         const doc = {
           projects: (await pr.json()).data || [],
           profile: (await pf.json()).data || {},
           skills: (await sk.json()).data || [],
           experience: (await ex.json()).data || [],
+          chatbot: (await cb.json()).data || {},
+          tokens: (await tk.json()).data || {}
         };
         setSiteDocument(doc);
-        setSettings(await st.json());
         if (useMakeStore.getState().versions.length === 0) {
-          addVersion("Initial Load", doc);
+          addVersion("Initial Baseline", doc);
         }
       } catch (e) { console.error("Failed to fetch site document", e); }
     }
     fetchAll();
   }, []);
+
+  /* ─── Synchronize Raw Code Output ────────────────────────────── */
 
   useEffect(() => {
     if (!siteDocument) return;
@@ -101,18 +92,35 @@ export function MakePage({ onBack }: MakePageProps) {
     setRawCode(JSON.stringify(siteDocument, null, 2));
   }, [selectedNodeId, siteDocument]);
 
+  /* ─── Global Keyboard Shortcuts Listener ─────────────────────── */
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      // Undo
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
         e.preventDefault();
         const state = useMakeStore.getState();
         const idx = state.versions.findIndex((v) => v.id === state.currentVersionId);
         if (idx > 0) handleRevert(state.versions[idx - 1]);
       }
+      // Redo
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.shiftKey && e.key === "z"))) {
+        e.preventDefault();
+        const state = useMakeStore.getState();
+        const idx = state.versions.findIndex((v) => v.id === state.currentVersionId);
+        if (idx !== -1 && idx < state.versions.length - 1) handleRevert(state.versions[idx + 1]);
+      }
+      // Deselect on Escape
+      if (e.key === "Escape") {
+        setSelectedNodeId(null);
+        setSelectedFigmaElement(null);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []); // Revert handler fetches from state now
+  }, []);
+
+  /* ─── Iframe PostMessage Event Listener ──────────────────────── */
 
   useEffect(() => {
     function onMsg(event: MessageEvent) {
@@ -139,7 +147,7 @@ export function MakePage({ onBack }: MakePageProps) {
     iframeRef.current?.contentWindow?.postMessage({ type: "FIGMA_INSPECT_TOGGLE", payload: isInspectEnabled }, "*");
   }, [isInspectEnabled]);
 
-  /* ─── Actions ──────────────────────────────────────────────── */
+  /* ─── Actions ────────────────────────────────────────────────── */
 
   async function runAudit() {
     setIsAuditing(true);
@@ -152,23 +160,22 @@ export function MakePage({ onBack }: MakePageProps) {
     setPromptText("");
     setGenerationState("generating");
     setGhostDiff(null);
-    setChatOpen(true);
 
     const userMsgId = crypto.randomUUID();
-    const imagePayload = pendingImage; // Capture it
+    const imagePayload = pendingImage;
     setMessages((prev) => [...prev, { id: userMsgId, type: "user", content: userPrompt, image: imagePayload || undefined }]);
-    setPendingImage(null); // Clear after sending
+    setPendingImage(null);
 
     const reasoningId = crypto.randomUUID();
     const steps = [
-      `Reading ${targetSection} data…`,
-      "Understanding intent…",
+      `Reading ${targetSection} data schema…`,
+      "Understanding design intent…",
       "Generating JSON patch…",
-      "Writing to CMS…",
+      "Validating schema…",
     ];
     setMessages((prev) => [
       ...prev,
-      { id: reasoningId, type: "reasoning", label: `AI (${provider})`, expanded: true, steps: [steps[0]] },
+      { id: reasoningId, type: "reasoning", label: `Make AI (${provider})`, expanded: true, steps: [steps[0]] },
     ]);
 
     let si = 1;
@@ -177,7 +184,7 @@ export function MakePage({ onBack }: MakePageProps) {
         setMessages((prev) => prev.map((m) => m.id === reasoningId ? { ...m, steps: steps.slice(0, si + 1) } : m));
         si++;
       } else clearInterval(interval);
-    }, 650);
+    }, 600);
 
     try {
       const before = JSON.parse(JSON.stringify(siteDocument[targetSection] || {}));
@@ -195,8 +202,6 @@ export function MakePage({ onBack }: MakePageProps) {
 
       setGhostDiff({ before, after });
       const newDoc = { ...siteDocument, [targetSection]: after };
-      
-      // Update local state to preview on canvas, but do NOT save to backend yet
       setSiteDocument(newDoc);
       if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
 
@@ -205,10 +210,12 @@ export function MakePage({ onBack }: MakePageProps) {
         {
           id: crypto.randomUUID(),
           type: "bot",
-          content: `Done! I've proposed changes to "${targetSection}". Review the live preview on the canvas and accept or discard.`,
+          content: `Done! I've proposed updates to "${targetSection}". Review the live preview on the canvas and accept or discard.`,
         },
       ]);
       setGenerationState("result");
+      setRightOpen(true);
+      setInspectTab("chat");
     } catch (err: any) {
       clearInterval(interval);
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), type: "error", content: err?.message || "Something went wrong." }]);
@@ -268,133 +275,137 @@ export function MakePage({ onBack }: MakePageProps) {
       const st = useMakeStore.getState();
       const after = st.ghostDiff?.after;
       if (after) {
-        // 1. Write to backend
         const res = await fetch(`/api/${targetSection}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(after),
         });
         if (res.ok) {
-           const newVersionName = `AI Update applied`;
-           // 2. Add to version history (canvas is already previewing it)
-           addVersion(newVersionName, siteDocument);
+          const newDoc = { ...siteDocument, [targetSection]: after };
+          addVersion(`AI: ${targetSection} update`, newDoc);
+          setGhostDiff(null);
+          setGenerationState("idle");
+          if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
         }
       }
-    } catch(e) {
-      console.error(e);
-    }
-    setGhostDiff(null); 
-    setGenerationState("idle"); 
+    } catch (e) { console.error(e); }
   }
-  
+
   async function handleDiscard() {
     const st = useMakeStore.getState();
     const before = st.ghostDiff?.before;
     if (before) {
-       // Revert canvas to original state
-       const newDoc = { ...siteDocument, [targetSection]: before };
-       setSiteDocument(newDoc);
-       if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      const newDoc = { ...siteDocument, [targetSection]: before };
+      setSiteDocument(newDoc);
+      setGhostDiff(null);
+      setGenerationState("idle");
+      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
     }
-    setGhostDiff(null);
-    setGenerationState("idle");
   }
 
   async function saveContentEdits(patch: any, fieldName?: string) {
     if (!selectedNodeId) return;
-    const [section, idOrIndex] = selectedNodeId.split('.');
-    
-    const newDoc = JSON.parse(JSON.stringify(siteDocument));
-    let targetData = newDoc[section];
-    if (!targetData) return;
-
-    if (Array.isArray(targetData)) {
-      const idx = targetData.findIndex((item: any, i: number) => 
-        item.slug === idOrIndex || i.toString() === idOrIndex
-      );
-      if (idx !== -1) {
-        targetData[idx] = { ...targetData[idx], ...patch };
-      }
+    const [section, idOrIndex] = selectedNodeId.split(".");
+    let updatedSection = JSON.parse(JSON.stringify(siteDocument[section] || {}));
+    if (Array.isArray(updatedSection)) {
+      const idx = updatedSection.findIndex((item: any, i: number) => item.slug === idOrIndex || i.toString() === idOrIndex);
+      if (idx !== -1) updatedSection[idx] = { ...updatedSection[idx], ...patch };
     } else {
-      if (idOrIndex) {
-        targetData[idOrIndex] = { ...targetData[idOrIndex], ...patch };
-      } else {
-        newDoc[section] = { ...newDoc[section], ...patch };
-      }
+      if (idOrIndex) updatedSection[idOrIndex] = { ...updatedSection[idOrIndex], ...patch };
+      else updatedSection = { ...updatedSection, ...patch };
     }
-
-    try {
-      const res = await fetch(`/api/${section}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newDoc[section]),
-      });
-      if (res.ok) {
-        addVersion(fieldName ? `Updated ${section} ${fieldName}` : `Edit ${section} content`, newDoc);
-        setSiteDocument(newDoc);
-        if (iframeRef.current) {
-          iframeRef.current.src = iframeRef.current.src;
-        }
-      }
-    } catch (e) {
-      console.error("Failed to save content edit", e);
+    const res = await fetch(`/api/${section}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedSection),
+    });
+    if (res.ok) {
+      const newDoc = { ...siteDocument, [section]: updatedSection };
+      addVersion(`Edit ${selectedNodeId}`, newDoc);
+      setSiteDocument(newDoc);
+      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
     }
   }
 
-  /* ─── Render ────────────────────────────────────────────────── */
-  
-  const breadcrumb = breadcrumbFromElement(selectedFigmaElement);
-
   return (
-    <div style={{ fontFamily: "'Inter', system-ui, sans-serif" }} className="flex flex-col h-full w-full overflow-hidden bg-[#0a0a0c]">
-      {/* Zone 1 — Top Toolbar */}
-      <TopToolbar 
+    <div className="cms-viewport-fill flex flex-col h-[100dvh] w-[100dvw] bg-[#1E1E1E] text-zinc-100 font-sans overflow-hidden select-none">
+      {/* 1. Studio Top Command Bar */}
+      <StudioTopBar
         onBack={onBack}
-        onUndo={() => {
-          const idx = versions.findIndex((v) => v.id === currentVersionId);
-          if (idx > 0) handleRevert(versions[idx - 1]);
-        }}
-        breadcrumb={breadcrumb}
+        targetSection={targetSection}
+        onSelectTargetSection={setTargetSection}
+        handleSaveCode={handleSaveCode}
       />
 
+      {/* Mobile Tab Switcher (< md screens) */}
+      <div className="md:hidden flex items-center justify-center gap-2 p-2 border-b border-white/[0.08] bg-[#1E1E1E] shrink-0">
+        <button
+          onClick={() => setMobileTab("preview")}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            padding: "8px 12px",
+            background: mobileTab === "preview" ? "#0D99FF" : "transparent",
+            border: mobileTab === "preview" ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 8,
+            color: mobileTab === "preview" ? "#ffffff" : "#a1a1aa",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          <Eye size={14} />
+          <span>Canvas View</span>
+        </button>
+
+        <button
+          onClick={() => setMobileTab("editor")}
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            padding: "8px 12px",
+            background: mobileTab === "editor" ? "#9333ea" : "transparent",
+            border: mobileTab === "editor" ? "1px solid #a855f7" : "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 8,
+            color: mobileTab === "editor" ? "#ffffff" : "#a1a1aa",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer"
+          }}
+        >
+          <Sparkles size={14} />
+          <span>Studio Inspector</span>
+        </button>
+      </div>
+
+      {/* 2. Main Studio Body Workspace */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* Zone 2 — Left Dock */}
-        <LeftDock 
-          layerNodes={layerNodes}
-          onRefreshLayers={() => iframeRef.current?.contentWindow?.postMessage({ type: "FIGMA_SCAN_NODES" }, "*")}
-          onSelectNode={(nid) => {
-            setSelectedNodeId(nid);
-            setRightOpen(true);
-            setInspectTab("properties");
-            iframeRef.current?.contentWindow?.postMessage({ type: "FIGMA_SELECT_NODE", payload: nid }, "*");
-          }}
-          onScrollTo={(section) => {
-            iframeRef.current?.contentWindow?.postMessage({ type: "FIGMA_SCROLL_TO", payload: section }, "*");
-          }}
-        />
-
-        {/* Center Content (Zone 3, 5, 6) */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
-          
-          {/* Zone 3 — Canvas Zone */}
-          <CanvasZone 
+        {/* Desktop View / Mobile Conditional View */}
+        <div className={`md:flex flex-1 h-full w-full relative overflow-hidden ${mobileTab === "preview" ? "flex" : "hidden"}`}>
+          {/* Left Layers & Pages Tree */}
+          <StudioLeftTree
+            layerNodes={layerNodes}
             iframeRef={iframeRef}
-            breadcrumb={breadcrumb}
           />
 
-          {/* Zone 5 — AI Make Bar */}
-          <AiMakeBar 
+          {/* Dynamic Figma Zoom Canvas */}
+          <StudioCanvas
+            iframeRef={iframeRef}
+            selectedFigmaElement={selectedFigmaElement}
             startGeneration={startGeneration}
+            targetSection={targetSection}
           />
-
-          {/* Zone 6 — Status Bar */}
-          <StatusBar />
-
         </div>
 
-        {/* Zone 4 — Unified Right Inspector Dock */}
-        <div className="flex shrink-0 h-full relative">
-          <RightDock 
+        {/* Right Inspector Dock */}
+        <div className={`md:flex h-full shrink-0 ${mobileTab === "editor" ? "flex flex-1 w-full" : "hidden"}`}>
+          <StudioRightInspector
             iframeRef={iframeRef}
             selectedFigmaElement={selectedFigmaElement}
             setSelectedFigmaElement={setSelectedFigmaElement}
@@ -409,13 +420,10 @@ export function MakePage({ onBack }: MakePageProps) {
             startGeneration={startGeneration}
           />
         </div>
-
-        {/* Slide-over panels for Settings */}
-        <SlideOverPanel 
-          runAudit={runAudit}
-          iframeRef={iframeRef}
-        />
       </div>
+
+      {/* 3. Studio Minimal Status Bar */}
+      <StudioStatusBar />
     </div>
   );
 }
