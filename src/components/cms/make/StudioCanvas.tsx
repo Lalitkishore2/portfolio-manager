@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useMakeStore } from '@/store/makeStore';
 import { StudioFloatingPromptBar } from './StudioFloatingPromptBar';
 import { FigmaElement } from './types';
-import { Sparkles, Edit3, X, Eye, Sliders, ExternalLink } from 'lucide-react';
+import { Sparkles, Edit3, X, Eye, Sliders, ExternalLink, Move } from 'lucide-react';
 
 interface StudioCanvasProps {
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
@@ -46,7 +46,7 @@ export function StudioCanvas({
         const { width: containerW, height: containerH } = entry.contentRect;
         if (containerW > 0 && containerH > 0) {
           const availableW = containerW - 48; // padding
-          const availableH = containerH - 80; // top chip + bottom prompt bar
+          const availableH = containerH - 84; // top chip + bottom prompt bar
           const scaleX = availableW / frameWidth;
           const scaleY = availableH / frameHeight;
           const computedScale = Math.min(scaleX, scaleY, 1.0);
@@ -85,7 +85,7 @@ export function StudioCanvas({
       >
         {/* Top Floating Device Label Tag */}
         {!isFluid && (
-          <div className="mb-2 px-3 py-0.5 bg-[#2C2C2C] border border-white/[0.08] rounded-full text-[11px] font-mono font-medium text-zinc-400 flex items-center gap-1.5 shadow-md shrink-0">
+          <div className="mb-2 px-3 py-0.5 bg-[#2C2C2C] border border-white/[0.08] rounded-full text-[11px] font-mono font-medium text-zinc-300 flex items-center gap-1.5 shadow-md shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span>{frameLabel}</span>
             <span className="text-zinc-600">·</span>
@@ -113,7 +113,7 @@ export function StudioCanvas({
             className="w-full h-full border-none bg-black"
           />
 
-          {/* Active Element Selection Box Overlay */}
+          {/* Active Element Selection Box Overlay with Figma Corner Handles */}
           {selectedFigmaElement && !isFluid && (
             <div
               style={{
@@ -125,12 +125,18 @@ export function StudioCanvas({
                 border: "2px solid #0D99FF",
                 borderRadius: "3px",
                 pointerEvents: "none",
-                boxShadow: "0 0 0 1px rgba(13, 153, 255, 0.4), 0 0 15px rgba(13, 153, 255, 0.25)",
+                boxShadow: "0 0 0 1px rgba(13, 153, 255, 0.4), 0 0 20px rgba(13, 153, 255, 0.25)",
                 zIndex: 20
               }}
             >
+              {/* 4 Corner Anchor Handles */}
+              <div className="absolute -top-1 -left-1 w-2 h-2 bg-white border border-[#0D99FF] rounded-xs shadow-xs" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-white border border-[#0D99FF] rounded-xs shadow-xs" />
+              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white border border-[#0D99FF] rounded-xs shadow-xs" />
+              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-white border border-[#0D99FF] rounded-xs shadow-xs" />
+
               {/* Node Tag Badge */}
-              <div className="absolute -top-6 left-0 bg-[#0D99FF] text-white font-mono text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm">
+              <div className="absolute -top-6.5 left-0 bg-[#0D99FF] text-white font-mono text-[10px] px-2 py-0.5 rounded font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm">
                 <span>❖ {selectedFigmaElement.tagName}</span>
                 {selectedFigmaElement.nodeId && (
                   <span className="opacity-75">#{selectedFigmaElement.nodeId}</span>
@@ -138,7 +144,7 @@ export function StudioCanvas({
               </div>
 
               {/* Quick Action Floating Mini-Toolbar */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-[#1E1E1E] border border-white/20 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-1 pointer-events-auto text-[11px] whitespace-nowrap z-30">
+              <div className="absolute -bottom-9 left-1/2 -translate-x-1/2 bg-[#1E1E1E] border border-white/20 rounded-lg shadow-2xl px-2 py-1 flex items-center gap-1.5 pointer-events-auto text-[11px] whitespace-nowrap z-30">
                 <button
                   onClick={handleQuickAiPrompt}
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-white/10 text-purple-300 font-semibold cursor-pointer"
@@ -147,7 +153,7 @@ export function StudioCanvas({
                   <Sparkles size={11} className="text-purple-400" />
                   <span>Ask AI</span>
                 </button>
-                <div className="w-px h-3 bg-white/10" />
+                <div className="w-px h-3 bg-white/15" />
                 <button
                   onClick={() => {
                     setRightOpen(true);
@@ -156,7 +162,7 @@ export function StudioCanvas({
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-white/10 text-zinc-300 cursor-pointer"
                   title="Inspect styles & CMS values"
                 >
-                  <Sliders size={11} className="text-blue-400" />
+                  <Sliders size={11} className="text-[#0D99FF]" />
                   <span>Inspect</span>
                 </button>
                 <button

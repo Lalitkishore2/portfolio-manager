@@ -3,7 +3,8 @@ import {
   Sliders, Sparkles, History, Shield, Code, ChevronRight, Save, 
   Search, Check, X, AlertCircle, AlertTriangle, Info, Plus, Trash2, 
   ArrowRight, RefreshCw, Layers, Palette, Type, Layout, ExternalLink,
-  ChevronDown, CheckCircle2, RotateCcw, Hash, Maximize2, Move
+  ChevronDown, CheckCircle2, RotateCcw, Hash, Maximize2, Move, AlignCenter,
+  AlignLeft, AlignRight, AlignJustify, CornerUpRight, Grid, Smartphone
 } from 'lucide-react';
 import { useMakeStore, MakeMessage } from '@/store/makeStore';
 import { FigmaElement } from './types';
@@ -211,17 +212,44 @@ export function StudioRightInspector({
               </div>
             </div>
 
+            {/* Auto-Layout & Alignment Matrix */}
+            <div className="p-3 bg-[#1E1E1E] border border-white/[0.08] rounded-xl flex flex-col gap-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Layout &amp; Alignment</span>
+                <Grid size={11} className="text-zinc-500" />
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 bg-[#2C2C2C] p-1 rounded border border-white/5">
+                  <button className="px-2 py-0.5 rounded bg-white/10 text-white font-semibold text-[10px]">Row</button>
+                  <button className="px-2 py-0.5 rounded text-zinc-400 hover:text-white text-[10px]">Col</button>
+                </div>
+
+                {/* 9-Point Alignment Grid */}
+                <div className="grid grid-cols-3 gap-1 bg-[#2C2C2C] p-1 rounded border border-white/5">
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <div
+                      key={i}
+                      className={`w-2.5 h-2.5 rounded-xs transition-colors cursor-pointer ${
+                        i === 4 ? "bg-[#0D99FF]" : "bg-white/10 hover:bg-white/30"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Design Tokens Palette Binding */}
             <div className="p-3 bg-[#1E1E1E] border border-white/[0.08] rounded-xl flex flex-col gap-2.5 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Design System Tokens</span>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Design Tokens</span>
                 <Palette size={11} className="text-purple-400" />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {/* Primary Brand Color */}
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-zinc-400">Primary Accent</span>
+                  <span className="text-[10px] text-zinc-400">Primary</span>
                   <div className="flex items-center gap-1.5 bg-[#2C2C2C] p-1 rounded border border-white/5">
                     <input
                       type="color"

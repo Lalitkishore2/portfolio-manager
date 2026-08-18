@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, Monitor, Tablet, Smartphone, Maximize2, Undo2, Redo2, 
   Sparkles, Layers, Sliders, Save, Check, ChevronDown, Share2, Copy,
-  FolderGit2, Code2, Play, Layout, Palette, ExternalLink
+  ExternalLink, ZoomIn, ZoomOut, Eye, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useMakeStore } from '@/store/makeStore';
 
@@ -67,7 +67,7 @@ export function StudioTopBar({
 
   return (
     <header className="h-12 bg-[#1E1E1E] border-b border-white/[0.08] px-3 flex items-center justify-between shrink-0 select-none z-30 gap-3 no-scrollbar overflow-x-auto text-zinc-200">
-      {/* Left: Figma Logo / File Name Breadcrumb (Deconstructivist Portfolio Design System) */}
+      {/* Left: Figma Brand & File Title Breadcrumb */}
       <div className="flex items-center gap-2.5 shrink-0">
         <button
           onClick={onBack}
@@ -78,17 +78,22 @@ export function StudioTopBar({
         </button>
 
         <div className="flex items-center gap-2 pl-1">
-          {/* Figma Make Icon */}
+          {/* Figma Logo Sparkle Icon */}
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-blue-500 flex items-center justify-center shadow-sm">
               <Sparkles size={11} className="text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold tracking-tight text-white leading-none">
-                Deconstructivist Portfolio
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold tracking-tight text-white leading-none">
+                  Deconstructivist Portfolio
+                </span>
+                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">
+                  Make
+                </span>
+              </div>
               <span className="text-[9px] font-mono text-zinc-400 leading-tight">
-                Design System · Make
+                Design System · Production Ready
               </span>
             </div>
           </div>
@@ -163,7 +168,7 @@ export function StudioTopBar({
                 <span className="text-[10px] text-zinc-500 font-mono">Z</span>
               </button>
               <div className="h-px bg-white/5 my-0.5" />
-              {[50, 75, 100, 125, 150].map((z) => (
+              {[50, 75, 100, 125, 150, 200].map((z) => (
                 <button
                   key={z}
                   onClick={() => { setZoom(z); setAutoFitZoom(false); setZoomDropdownOpen(false); }}
@@ -179,7 +184,7 @@ export function StudioTopBar({
         </div>
       </div>
 
-      {/* Right: Share, History, AI Model, Panels & Save */}
+      {/* Right: History, Share, Model Selector, Panels & Primary Save */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Undo / Redo */}
         <div className="flex items-center gap-0.5 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5">
@@ -201,7 +206,7 @@ export function StudioTopBar({
           </button>
         </div>
 
-        {/* Share / Live Preview Link */}
+        {/* Share Link */}
         <button
           onClick={copyLiveLink}
           className="px-2 py-1 bg-[#2C2C2C] hover:bg-white/[0.08] border border-white/[0.06] rounded-lg text-zinc-300 hover:text-white text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer"

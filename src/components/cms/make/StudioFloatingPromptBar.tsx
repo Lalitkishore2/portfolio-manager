@@ -41,7 +41,7 @@ export function StudioFloatingPromptBar({
 
   const isGenerating = generationState === "generating";
 
-  // Dynamic context-aware prompt suggestions
+  // Dynamic context-aware prompt suggestions for Deconstructivist Portfolio
   const dynamicChips = selectedNodeId
     ? [
         `Rewrite ${selectedNodeId} tagline to be punchier`,
@@ -137,7 +137,7 @@ export function StudioFloatingPromptBar({
                 <button
                   key={m}
                   onClick={() => setPromptMode(m)}
-                  className={`px-1.5 py-0.5 rounded transition-all capitalize ${
+                  className={`px-1.5 py-0.5 rounded transition-all capitalize cursor-pointer ${
                     promptMode === m ? "bg-white/10 text-white font-semibold" : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
@@ -160,7 +160,7 @@ export function StudioFloatingPromptBar({
             </div>
             <button
               onClick={() => setPendingImage(null)}
-              className="p-1 text-zinc-500 hover:text-white transition-colors ml-1"
+              className="p-1 text-zinc-500 hover:text-white transition-colors ml-1 cursor-pointer"
             >
               <X size={12} />
             </button>
@@ -213,7 +213,7 @@ export function StudioFloatingPromptBar({
               disabled={!promptText.trim() || isGenerating}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
                 promptText.trim() && !isGenerating
-                  ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:brightness-110 text-white shadow-purple-500/25 active:scale-95"
+                  ? "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:brightness-110 text-white shadow-purple-500/25 active:scale-95"
                   : "bg-white/10 text-zinc-500 cursor-not-allowed"
               }`}
             >

@@ -16,4 +16,18 @@ export interface LayerTreeNode {
   type: 'frame' | 'component' | 'text' | 'group' | 'vector' | 'grid';
   children?: LayerTreeNode[];
   expanded?: boolean;
+  visible?: boolean;
+  locked?: boolean;
+}
+
+export interface DesignTokens {
+  primary: string;
+  background: string;
+  surface: string;
+  textMain: string;
+  textMuted: string;
+  fontPrimary: string;
+  fontMono: string;
+  accent?: string;
+  borderSubtle?: string;
 }
