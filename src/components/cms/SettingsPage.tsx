@@ -343,6 +343,7 @@ export function SettingsPage() {
     },
     error: {
       label: "Connection Error",
+      icon: <XCircle size={13} color="#f87171" />,
       color: "var(--cms-accent-rose)",
       bg: "rgba(244,63,94,0.08)",
       border: "rgba(244,63,94,0.2)",
@@ -391,6 +392,7 @@ export function SettingsPage() {
     >
       {/* Top Bar */}
       <div
+        className="cms-mobile-padding cms-mobile-stack"
         style={{
           padding: "18px 32px",
           display: "flex",
@@ -398,6 +400,7 @@ export function SettingsPage() {
           justifyContent: "space-between",
           borderBottom: "1px solid #1f1f22",
           flexShrink: 0,
+          gap: 12,
         }}
       >
         <div>

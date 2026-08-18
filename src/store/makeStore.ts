@@ -38,12 +38,14 @@ interface MakeState {
   setLeftOpen: (open: boolean) => void;
   rightOpen: boolean;
   setRightOpen: (open: boolean) => void;
-  previewMode: "desktop" | "tablet" | "mobile";
-  setPreviewMode: (mode: "desktop" | "tablet" | "mobile") => void;
+  previewMode: "desktop" | "tablet" | "mobile" | "fluid";
+  setPreviewMode: (mode: "desktop" | "tablet" | "mobile" | "fluid") => void;
   isInspectEnabled: boolean;
   setIsInspectEnabled: (enabled: boolean) => void;
   zoom: number;
   setZoom: (zoom: number) => void;
+  autoFitZoom: boolean;
+  setAutoFitZoom: (auto: boolean) => void;
   gridEnabled: boolean;
   setGridEnabled: (enabled: boolean) => void;
   snapEnabled: boolean;
@@ -116,6 +118,8 @@ export const useMakeStore = create<MakeState>()(
       setIsInspectEnabled: (enabled) => set({ isInspectEnabled: enabled }),
       zoom: 100,
       setZoom: (zoom) => set({ zoom }),
+      autoFitZoom: true,
+      setAutoFitZoom: (auto) => set({ autoFitZoom: auto }),
       gridEnabled: false,
       setGridEnabled: (enabled) => set({ gridEnabled: enabled }),
       snapEnabled: false,

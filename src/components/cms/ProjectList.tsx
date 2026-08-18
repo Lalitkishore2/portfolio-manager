@@ -140,7 +140,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
           className="desktop-only"
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 120px 100px 140px 36px",
+            gridTemplateColumns: "minmax(260px, 2.5fr) 140px 120px 160px 40px",
             gap: 16,
             padding: "0 16px 8px",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -176,7 +176,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                   onClick={() => onSelectProject(project.slug || project.id)}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 120px 100px 140px 36px",
+                    gridTemplateColumns: "minmax(260px, 2.5fr) 140px 120px 160px 40px",
                     gap: 16,
                     padding: "12px 16px",
                     background: "transparent",
@@ -256,7 +256,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                   {/* Updated */}
                   <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
                     <Clock size={11} />
-                    {formatDate(project.updatedAt || project.publishedAt)}
+                    {formatDate(project.updatedAt || (project as any).publishedAt)}
                   </div>
 
                   {/* Arrow */}
@@ -331,7 +331,7 @@ export function ProjectList({ projects, onSelectProject, onNewProject }: Project
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid rgba(255,255,255,0.03)" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, color: "#52525b", fontSize: 11 }}>
                       <Clock size={11} />
-                      <span>Updated {formatDate(project.updatedAt || project.publishedAt)}</span>
+                      <span>Updated {formatDate(project.updatedAt || (project as any).publishedAt)}</span>
                     </div>
                     <ArrowRight size={14} style={{ color: "#3b82f6" }} />
                   </div>

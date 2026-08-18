@@ -1,40 +1,43 @@
 export const tokens = {
-  // Colors
+  // Authentic Figma Make Color System
   color: {
     bg: {
-      app:       '#0a0a0a',   // outermost app background
-      dock:      '#111111',   // left + right dock backgrounds
-      canvas:    '#0f0f0f',   // canvas zone background
-      toolbar:   '#161616',   // top toolbar background
-      aiBar:     '#141414',   // AI make bar background
-      statusBar: '#0a0a0a',   // status bar background
-      hover:     'rgba(255, 255, 255, 0.04)', // subtle hover
-      active:    'rgba(59, 130, 246, 0.08)',  // active/selected state background
-      activeBlue:'rgba(59, 130, 246, 0.1)',   // slightly stronger active
+      app:       '#1E1E1E',   // Figma dark chrome background
+      surface:   '#2C2C2C',   // Panel surfaces & card backgrounds
+      surfaceHover: '#383838', // Card hover state
+      canvas:    '#141414',   // Deep dark canvas workspace
+      toolbar:   '#1E1E1E',   // Top header bar
+      floatingBar:'#1E1E1E',  // Bottom floating command bar
+      statusBar: '#181818',   // Minimal bottom status bar
+      hover:     'rgba(255, 255, 255, 0.06)',
+      active:    'rgba(13, 153, 255, 0.15)',
+      activeBlue:'rgba(13, 153, 255, 0.25)',
     },
     border: {
-      default:   '#1e1e22',   // generic borders
-      dark:      '#1a1a1e',   // darker dividers
-      active:    '#3B82F6',   // active selection border (blue-500)
-      ai:        '#5b5bf8',   // AI accent
-      success:   '#4ade80',   // green
-      warning:   '#fb923c',   // orange
-      error:     '#f87171',   // red
+      default:   'rgba(255, 255, 255, 0.08)',
+      subtle:    'rgba(255, 255, 255, 0.04)',
+      focus:     '#0D99FF',   // Figma Blue (brand)
+      ai:        '#8A3FFC',   // Figma AI Purple
+      aiGradient:'linear-gradient(135deg, #8A3FFC, #D946EF, #0D99FF)',
+      success:   '#10B981',   // Emerald
+      warning:   '#F59E0B',   // Amber
+      error:     '#EF4444',   // Rose
     },
     text: {
-      primary:   '#ffffff',
-      secondary: '#aaaaaa',
-      muted:     'rgba(255, 255, 255, 0.4)',
-      accent:    '#C6FF00',   // portfolio brand accent (or #3B82F6)
+      primary:   '#FFFFFF',
+      secondary: '#D4D4D8',
+      muted:     '#71717A',
+      accent:    '#0D99FF',   // Figma Blue
+      ai:        '#C084FC',   // Purple-400
     }
   },
   
-  // Layout Dimensions
+  // Layout Dimensions & Grid
   layout: {
-    toolbarHeight:   48,
-    leftDockWidth:   220,
-    rightDockWidth:  280,
-    aiBarHeight:     56, // collapsed
+    topBarHeight:    48,
+    leftTreeWidth:   240,
+    rightDockWidth:  320,
     statusBarHeight: 24,
+    floatingBarMaxW: 560,
   }
 };

@@ -3,7 +3,7 @@ import {
   Sliders, Sparkles, History, Shield, Code, ChevronRight, Save, 
   Search, Check, X, AlertCircle, AlertTriangle, Info, Plus, Trash2, 
   ArrowRight, RefreshCw, Layers, Palette, Type, Layout, ExternalLink,
-  ChevronDown, CheckCircle2, RotateCcw
+  ChevronDown, CheckCircle2, RotateCcw, Hash, Maximize2, Move
 } from 'lucide-react';
 import { useMakeStore, MakeMessage } from '@/store/makeStore';
 import { FigmaElement } from './types';
@@ -45,6 +45,17 @@ export function StudioRightInspector({
   } = useMakeStore();
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Deconstructivist Portfolio Design Tokens
+  const defaultTokens = siteDocument?.tokens || {
+    primary: "#FF84BA",
+    background: "#FFEFE3",
+    surface: "#FFFFFF",
+    textMain: "#111111",
+    textMuted: "#6b7280",
+    fontPrimary: "Inter",
+    fontMono: "JetBrains Mono"
+  };
 
   useEffect(() => {
     if (chatEndRef.current && inspectTab === "chat") {
@@ -89,6 +100,18 @@ export function StudioRightInspector({
         }
       }, "*");
     }
+  };
+
+  const handleTokenUpdate = (tokenKey: string, val: string) => {
+    const newTokens = { ...defaultTokens, [tokenKey]: val };
+    const patch = { tokens: newTokens };
+    saveContentEdits(patch, "tokens");
+
+    // Post to iframe to update live css variables
+    iframeRef.current?.contentWindow?.postMessage({
+      type: "FIGMA_UPDATE_TOKENS",
+      payload: newTokens
+    }, "*");
   };
 
   return (
@@ -161,12 +184,79 @@ export function StudioRightInspector({
               {selectedNodeId && (
                 <button
                   onClick={() => setSelectedNodeId(null)}
-                  className="p-1 text-zinc-500 hover:text-white transition-colors"
+                  className="p-1 text-zinc-500 hover:text-white transition-colors cursor-pointer"
                   title="Clear Selection"
                 >
                   <X size={12} />
                 </button>
               )}
+            </div>
+
+            {/* Geometry & Dimensions (Figma Style) */}
+            <div className="p-3 bg-[#1E1E1E] border border-white/[0.08] rounded-xl flex flex-col gap-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Frame &amp; Geometry</span>
+                <Move size={11} className="text-zinc-500" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                <div className="flex items-center gap-1.5 bg-[#2C2C2C] px-2 py-1 rounded border border-white/5">
+                  <span className="text-zinc-500 text-[10px]">W</span>
+                  <span className="text-zinc-200">{selectedFigmaElement?.rect ? `${Math.round(selectedFigmaElement.rect.width)}px` : "1440px"}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-[#2C2C2C] px-2 py-1 rounded border border-white/5">
+                  <span className="text-zinc-500 text-[10px]">H</span>
+                  <span className="text-zinc-200">{selectedFigmaElement?.rect ? `${Math.round(selectedFigmaElement.rect.height)}px` : "Auto"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Design Tokens Palette Binding */}
+            <div className="p-3 bg-[#1E1E1E] border border-white/[0.08] rounded-xl flex flex-col gap-2.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Design System Tokens</span>
+                <Palette size={11} className="text-purple-400" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {/* Primary Brand Color */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-zinc-400">Primary Accent</span>
+                  <div className="flex items-center gap-1.5 bg-[#2C2C2C] p-1 rounded border border-white/5">
+                    <input
+                      type="color"
+                      value={defaultTokens.primary || "#FF84BA"}
+                      onChange={(e) => handleTokenUpdate("primary", e.target.value)}
+                      className="w-5 h-5 rounded border border-white/20 bg-transparent cursor-pointer shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={defaultTokens.primary || "#FF84BA"}
+                      onChange={(e) => handleTokenUpdate("primary", e.target.value)}
+                      className="w-full bg-transparent text-[10px] font-mono text-zinc-200 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Canvas Background */}
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-zinc-400">Background</span>
+                  <div className="flex items-center gap-1.5 bg-[#2C2C2C] p-1 rounded border border-white/5">
+                    <input
+                      type="color"
+                      value={defaultTokens.background || "#FFEFE3"}
+                      onChange={(e) => handleTokenUpdate("background", e.target.value)}
+                      className="w-5 h-5 rounded border border-white/20 bg-transparent cursor-pointer shrink-0"
+                    />
+                    <input
+                      type="text"
+                      value={defaultTokens.background || "#FFEFE3"}
+                      onChange={(e) => handleTokenUpdate("background", e.target.value)}
+                      className="w-full bg-transparent text-[10px] font-mono text-zinc-200 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Editable Content Fields if item exists */}
@@ -216,7 +306,7 @@ export function StudioRightInspector({
                 {/* Accent Color */}
                 {targetItem.accent !== undefined && (
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-zinc-400 font-medium">Accent Color</label>
+                    <label className="text-[10px] text-zinc-400 font-medium">Card Accent Color</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="color"
@@ -240,7 +330,7 @@ export function StudioRightInspector({
             {selectedFigmaElement?.styles && (
               <div className="flex flex-col gap-2 p-3 bg-[#1E1E1E] border border-white/[0.08] rounded-xl shadow-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Computed Styles</span>
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Computed CSS Styles</span>
                   <Palette size={11} className="text-purple-400" />
                 </div>
 
@@ -430,7 +520,7 @@ export function StudioRightInspector({
         {inspectTab === "code" && (
           <div className="flex-1 flex flex-col overflow-hidden p-2 gap-2">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Raw JSON</span>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Raw JSON Data</span>
               <button
                 onClick={handleSaveCode}
                 className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#0D99FF] text-white text-xs font-semibold hover:bg-[#0080FF] transition-colors cursor-pointer"

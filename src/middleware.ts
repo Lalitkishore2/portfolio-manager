@@ -12,8 +12,8 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get("cms_session")?.value;
   const { pathname } = request.nextUrl;
 
-  // Avoid redirect loops for login page and auth APIs
-  if (pathname === "/login" || pathname.startsWith("/api/auth")) {
+  // Allow login, auth endpoints, public queries, and Formspree webhook API
+  if (pathname === "/login" || pathname.startsWith("/api/auth") || pathname === "/api/queries" || pathname.startsWith("/api/formspree")) {
     return NextResponse.next();
   }
 

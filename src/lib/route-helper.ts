@@ -77,6 +77,9 @@ export function createContentRoute(filename: string, commitLabel: string, defaul
 
         return NextResponse.json({ success: true, sha: newSha });
       } catch (error: any) {
+        if (error instanceof SyntaxError) {
+          return NextResponse.json({ error: "Invalid or empty JSON body" }, { status: 400 });
+        }
         logger.error({ err: error, filename }, `Failed to save ${filename}`);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }

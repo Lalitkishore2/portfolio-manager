@@ -220,3 +220,11 @@ npx playwright test  # E2E tests
 | `src/app/api/analytics/route.ts` | GA4 integration with GitHub traffic fallback |
 | `src/app/api/make/route.ts` | Multi-provider AI patch generation |
 | `docs/END_TO_END.md` | Full system architecture and data flow |
+
+---
+
+## 6. UI Iconography & Screen Ratio Scaling Standards
+
+- **Zero Emojis in Code**: Never use text emojis (e.g. 👁️, 🤖, 🎛️, 📜) in JSX, HTML text, or style labels. Always import clean SVG icons from `lucide-react` (e.g., `Eye`, `Sparkles`, `Sliders`, `History`, `Shield`, `Code`).
+- **Dynamic Screen Ratio Scaling**: Every studio panel, top bar, split-pane layout, and canvas container must support dynamic aspect ratio scaling. Use `flex-wrap: wrap`, `overflow-x-auto`, `min-width: 0`, and container media queries so UI components scale seamlessly from 4K displays down to 390px mobile viewports without text clipping or button overlap.
+

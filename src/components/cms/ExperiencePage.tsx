@@ -34,7 +34,7 @@ function ExperienceCard({ exp, onChange, onDelete }: { exp: Experience; onChange
           <div onClick={(e) => e.stopPropagation()}><GripVertical size={16} className="text-zinc-500 cursor-grab" /></div>
           {!exp.expanded && (
             <div className="flex items-center gap-2 text-[13px] text-zinc-400">
-              <span className="text-zinc-200 font-medium">{exp.year || "Year"}</span>
+              <span className="text-zinc-200 font-medium whitespace-nowrap shrink-0">{exp.year || "Year"}</span>
               <span style={{ color: exp.accent || "#FF3B30" }} className="font-mono text-[11px]">{exp.label || "Index"}</span>
               <span className="truncate max-w-[300px]">— {exp.description || "No description"}</span>
             </div>
@@ -123,9 +123,9 @@ export function ExperiencePage({ initialData, onSave }: { initialData: Experienc
       className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-950 font-sans">
 
       {/* Top Bar */}
-      <div className="px-8 py-5 flex items-center justify-between border-b border-white/5 shrink-0">
+      <div className="cms-mobile-padding cms-mobile-stack px-8 py-5 flex items-center justify-between border-b border-white/5 shrink-0 flex-wrap gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-50 mb-1">History & Timeline</h1>
+          <h1 className="text-xl font-semibold text-zinc-50 mb-1">History &amp; Timeline</h1>
           <div className="flex items-center gap-2 text-xs text-zinc-400">
             <span>{experiences.length} entries in</span>
             <span className="bg-zinc-900 border border-white/10 rounded px-2 py-0.5 font-mono text-[11px] text-zinc-300">experience.json</span>

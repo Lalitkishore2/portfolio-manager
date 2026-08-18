@@ -369,10 +369,21 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
           </div>
 
           {/* SECTION 2 — Bio */}
-          <div style={S.sectionHeader}>
-            <div style={S.numBadge}>02</div>
-            <span style={S.sectionLabel}>Bio / About</span>
-            <div style={S.sectionLine} />
+          <div style={{ ...S.sectionHeader, justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+              <div style={S.numBadge}>02</div>
+              <span style={S.sectionLabel}>Bio / About</span>
+              <div style={S.sectionLine} />
+            </div>
+            {!showDiff && (
+              <button 
+                onClick={handleToneEnforce} 
+                disabled={enforcingTone}
+                style={{ background: "rgba(39,39,42,0.8)", border: "1px solid rgba(63,63,70,0.5)", borderRadius: 6, padding: "4px 10px", display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 600, color: enforcingTone ? "#a1a1aa" : "#a855f7", cursor: enforcingTone ? "not-allowed" : "pointer", backdropFilter: "blur(8px)", fontFamily: "'Inter', sans-serif", marginLeft: 12, flexShrink: 0 }}
+              >
+                <Sparkles size={12} /> {enforcingTone ? "Generating..." : "Enforce Tone"}
+              </button>
+            )}
           </div>
           <div style={{ position: "relative" }}>
             {showDiff ? (
@@ -392,14 +403,7 @@ export function ProfilePage({ initialData, onSave }: { initialData: any; onSave:
                   setBio(text);
                   toast.success("AI edit applied!");
                 }} />
-                <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} style={{ ...S.textarea, minHeight: 160, paddingRight: 60 }} placeholder="Write your bio..." />
-                <button 
-                  onClick={handleToneEnforce} 
-                  disabled={enforcingTone}
-                  style={{ position: "absolute", top: 8, right: 8, background: "rgba(39,39,42,0.8)", border: "1px solid rgba(63,63,70,0.5)", borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 6, fontSize: 10, fontWeight: 600, color: enforcingTone ? "#a1a1aa" : "#a855f7", cursor: enforcingTone ? "not-allowed" : "pointer", backdropFilter: "blur(8px)", fontFamily: "'Inter', sans-serif" }}
-                >
-                  <Sparkles size={12} /> {enforcingTone ? "Generating..." : "Enforce Tone"}
-                </button>
+                <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={6} style={{ ...S.textarea, minHeight: 160 }} placeholder="Write your bio..." />
               </>
             )}
           </div>

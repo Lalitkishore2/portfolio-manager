@@ -14,6 +14,7 @@ import {
   Check,
   LogOut,
   ExternalLink,
+  Mail,
 } from "lucide-react";
 
 export type CMSView =
@@ -24,6 +25,7 @@ export type CMSView =
   | "skills"
   | "analytics"
   | "chatbot"
+  | "formspree"
   | "make"
   | "tokens"
   | "settings";
@@ -43,7 +45,7 @@ const CONTENT_NAV: NavItem[] = [
 
 const AI_NAV: NavItem[] = [
   { id: "analytics", label: "Analytics",       icon: BarChart2 },
-  { id: "chatbot",   label: "Chatbot Auditor", icon: Bot       },
+  { id: "chatbot",   label: "Auditor & Mails",  icon: Bot       },
   { id: "make",      label: "Make",            icon: Sparkles  },
 ];
 
@@ -105,7 +107,9 @@ export function CMSSidebar({
             borderBottom: "1px solid #1f1f22",
             flexShrink: 0,
             display: "flex",
+            alignItems: "center",
             justifyContent: "center",
+            gap: 10,
           }}
         >
           <div
@@ -133,6 +137,27 @@ export function CMSSidebar({
           >
             LK
           </div>
+
+          {/* Mobile menu indicator button (visible on mobile screens) */}
+          <button
+            onClick={() => setOpenDrawer(!openDrawer)}
+            className="mobile-only"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "5px 10px",
+              background: "#18181b",
+              border: "1px solid #27272a",
+              borderRadius: 6,
+              color: "#e4e4e7",
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            <span>Menu</span>
+          </button>
         </div>
 
         {/* -- Nav -- */}
@@ -273,7 +298,7 @@ export function CMSSidebar({
               gap: 16,
               fontFamily: "'Inter', sans-serif",
             }}
-            className="no-scrollbar"
+            className="cms-pop-drawer no-scrollbar"
           >
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>

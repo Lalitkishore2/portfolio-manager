@@ -12,6 +12,7 @@ import { PublishModal } from "./ui/PublishModal";
 const ProjectEditor = dynamic(() => import("./ProjectEditor").then((mod) => mod.ProjectEditor), { ssr: false });
 const AnalyticsDashboard = dynamic(() => import("./AnalyticsDashboard").then((mod) => mod.AnalyticsDashboard), { ssr: false });
 const ChatbotAuditorScreen = dynamic(() => import("./ChatbotAuditorScreen").then((mod) => mod.ChatbotAuditorScreen), { ssr: false });
+const FormspreeMailsScreen = dynamic(() => import("./FormspreeMailsScreen").then((mod) => mod.FormspreeMailsScreen), { ssr: false });
 const MakePage = dynamic(() => import("./MakePage").then((mod) => mod.MakePage), { ssr: false });
 const ProfilePage = dynamic(() => import("./ProfilePage").then((mod) => mod.ProfilePage), { ssr: false });
 const ExperiencePage = dynamic(() => import("./ExperiencePage").then((mod) => mod.ExperiencePage), { ssr: false });
@@ -321,6 +322,7 @@ export default function App({
       case "analytics":
         return <AnalyticsDashboard onNavigate={handleNavigate} />;
       case "chatbot":
+      case "formspree":
         return <ChatbotAuditorScreen chatbotData={chatbot} onSave={handleSaveChatbot} />;
       case "make":
         return <MakePage onBack={() => handleNavigate("projects")} />;
@@ -343,8 +345,8 @@ export default function App({
     <div
       className="cms-app-container"
       style={{
-        width: "100%",
-        height: "100vh",
+        width: "100dvw",
+        height: "100dvh",
         display: "flex",
         overflow: "hidden",
         background: "#09090b",

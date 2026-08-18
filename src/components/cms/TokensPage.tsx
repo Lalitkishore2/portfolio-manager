@@ -58,7 +58,7 @@ export function TokensPage() {
   };
 
   return (
-    <div style={{ flex: 1, padding: "40px 60px", overflowY: "auto", background: "#09090b" }}>
+    <div className="cms-mobile-padding" style={{ flex: 1, padding: "24px 32px", overflowY: "auto", background: "#09090b" }}>
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-white mb-2">Design Tokens</h1>
@@ -67,9 +67,9 @@ export function TokensPage() {
 
         <FigmaCard>
           <FigmaCardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <FigmaCardTitle>Color Palette &amp; Presets</FigmaCardTitle>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -121,13 +121,13 @@ export function TokensPage() {
               </div>
             </div>
           </FigmaCardHeader>
-          <FigmaCardContent className="grid grid-cols-2 gap-6">
+          <FigmaCardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={tokens.primary || "#2D5BFF"}
                 onChange={(e) => setTokens({ ...tokens, primary: e.target.value })}
-                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer shrink-0"
               />
               <div className="flex-1">
                 <FigmaInput
@@ -142,7 +142,7 @@ export function TokensPage() {
                 type="color"
                 value={tokens.background || "#0A0A0A"}
                 onChange={(e) => setTokens({ ...tokens, background: e.target.value })}
-                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer shrink-0"
               />
               <div className="flex-1">
                 <FigmaInput
@@ -157,7 +157,7 @@ export function TokensPage() {
                 type="color"
                 value={tokens.surface || "#111111"}
                 onChange={(e) => setTokens({ ...tokens, surface: e.target.value })}
-                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer shrink-0"
               />
               <div className="flex-1">
                 <FigmaInput
@@ -172,7 +172,7 @@ export function TokensPage() {
                 type="color"
                 value={tokens.textMain || "#FAFAFA"}
                 onChange={(e) => setTokens({ ...tokens, textMain: e.target.value })}
-                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded border border-zinc-700 bg-transparent cursor-pointer shrink-0"
               />
               <div className="flex-1">
                 <FigmaInput
@@ -189,7 +189,7 @@ export function TokensPage() {
           <FigmaCardHeader>
             <FigmaCardTitle>Typography</FigmaCardTitle>
           </FigmaCardHeader>
-          <FigmaCardContent className="grid grid-cols-2 gap-6">
+          <FigmaCardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <FigmaInput 
               label="Primary Font" 
               value={tokens.fontPrimary}

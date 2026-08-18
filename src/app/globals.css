@@ -235,3 +235,24 @@
     max-width: 100% !important;
   }
 }
+
+/* Dynamic Aspect Ratio & Touch Screen Scaling Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.cms-viewport-fill {
+  height: 100dvh;
+  width: 100dvw;
+  overflow: hidden;
+}
+
+@supports (container-type: inline-size) {
+  .cms-container-cq {
+    container-type: inline-size;
+  }
+}

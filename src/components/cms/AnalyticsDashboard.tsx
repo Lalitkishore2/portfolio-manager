@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useMakeStore } from "@/store/makeStore";
-import { GlassCalendar } from "../ui/glass-calendar";
+import { GlassCalendar, CalendarEvent } from "../ui/glass-calendar";
 import { LiquidButton, MetalButton } from "../ui/liquid-glass-button";
 import {
   AreaChart,
@@ -10,9 +10,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Cell as RechartsCell,
 } from "recharts";
 import {
   Globe,
@@ -26,44 +23,21 @@ import {
   ExternalLink,
   Code,
   Zap,
+  Users,
+  Activity,
+  UserCheck,
+  CheckCircle2,
+  Calendar as CalendarIcon,
+  Plus,
+  ArrowRight,
+  FileText,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
-/* --- Traffic data (30 days) ----------------------------------- */
+/* --- Custom tooltips ------------------------------------------- */
 
-const TRAFFIC_DATA = [
-  { day: "May 17", views: 320 }, { day: "May 18", views: 410 }, { day: "May 19", views: 380 },
-  { day: "May 20", views: 520 }, { day: "May 21", views: 480 }, { day: "May 22", views: 600 },
-  { day: "May 23", views: 720 }, { day: "May 24", views: 680 }, { day: "May 25", views: 590 },
-  { day: "May 26", views: 740 }, { day: "May 27", views: 820 }, { day: "May 28", views: 900 },
-  { day: "May 29", views: 860 }, { day: "May 30", views: 780 }, { day: "May 31", views: 920 },
-  { day: "Jun 1",  views: 1050 }, { day: "Jun 2",  views: 980 }, { day: "Jun 3",  views: 1120 },
-  { day: "Jun 4",  views: 1080 }, { day: "Jun 5",  views: 1200 }, { day: "Jun 6",  views: 1350 },
-  { day: "Jun 7",  views: 1280 }, { day: "Jun 8",  views: 1190 }, { day: "Jun 9",  views: 1400 },
-  { day: "Jun 10", views: 1320 }, { day: "Jun 11", views: 1500 }, { day: "Jun 12", views: 1620 },
-  { day: "Jun 13", views: 1580 }, { day: "Jun 14", views: 1700 }, { day: "Jun 15", views: 1880 },
-];
-
-const REFERRER_DATA = [
-  { name: "GitHub", value: 42 },
-  { name: "LinkedIn", value: 28 },
-  { name: "Direct", value: 18 },
-  { name: "Twitter", value: 8 },
-  { name: "Other", value: 4 },
-];
-
-const REFERRER_COLORS = ["#3b82f6", "#a78bfa", "#10b981", "#f59e0b", "#6b7280"];
-
-const ACTIVITY = [
-  { type: "commit", text: "Commit pushed to main", meta: "8ef1c3b", time: "2 min ago", exact: "Jun 15 2026, 03:41 UTC" },
-  { type: "deploy", text: "Deployment complete", meta: "Pages CI #142", time: "3 min ago", exact: "Jun 15 2026, 03:40 UTC" },
-  { type: "bot",    text: "Chatbot knowledge updated", meta: "knowledge.json", time: "18 min ago", exact: "Jun 15 2026, 03:25 UTC" },
-  { type: "commit", text: "Commit pushed to main", meta: "a1d9f72", time: "1h ago", exact: "Jun 15 2026, 02:44 UTC" },
-];
-
-/* --- Custom tooltip ------------------------------------------- */
-
-function CustomTooltip({ active, payload, label }: any) {
+function CustomWebsiteTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div
@@ -76,9 +50,36 @@ function CustomTooltip({ active, payload, label }: any) {
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      <div style={{ color: "var(--cms-text-secondary)", marginBottom: 3 }}>{label}</div>
-      <div style={{ color: "var(--cms-accent-cobalt)", fontWeight: 600 }}>
-        {payload[0].value.toLocaleString()} views
+      <div style={{ color: "var(--cms-text-secondary)", marginBottom: 4 }}>{label}</div>
+      <div style={{ color: "#3b82f6", fontWeight: 600 }}>
+        Active Users: {payload[0]?.value || 0}
+      </div>
+      <div style={{ color: "#10b981", fontWeight: 600, marginTop: 2 }}>
+        Page Views: {payload[1]?.value || 0}
+      </div>
+    </div>
+  );
+}
+
+function CustomGithubTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: "rgba(24,24,27,0.95)",
+        border: "1px solid var(--cms-border-dark)",
+        borderRadius: 8,
+        padding: "8px 12px",
+        fontSize: 12,
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <div style={{ color: "var(--cms-text-secondary)", marginBottom: 4 }}>{label}</div>
+      <div style={{ color: "#a78bfa", fontWeight: 600 }}>
+        Views: {payload[0]?.value || 0}
+      </div>
+      <div style={{ color: "#f59e0b", fontWeight: 600, marginTop: 2 }}>
+        Uniques: {payload[1]?.value || 0}
       </div>
     </div>
   );
@@ -101,88 +102,12 @@ function GlassCard({
         border: "1px solid var(--cms-border-glass)",
         borderRadius: 12,
         boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+        boxSizing: "border-box",
         ...style,
       }}
     >
       {children}
     </div>
-  );
-}
-
-/* --- KPI Card -------------------------------------------------- */
-
-function KpiCard({
-  title,
-  value,
-  sub,
-  icon: Icon,
-  accentColor,
-  trend,
-}: {
-  title: string;
-  value: string;
-  sub: string;
-  icon: React.ComponentType<{ size?: number; color?: string; style?: React.CSSProperties; className?: string }>;
-  accentColor: string;
-  trend?: string;
-}) {
-  return (
-    <GlassCard>
-      <div style={{ padding: "20px 22px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: `${accentColor}18`,
-              border: `1px solid ${accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: `0 0 16px ${accentColor}20`,
-            }}
-          >
-            <Icon size={18} style={{ color: accentColor }} />
-          </div>
-          {trend && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 8px",
-                background: "rgba(16,185,129,0.08)",
-                border: "1px solid rgba(16,185,129,0.18)",
-                borderRadius: 20,
-                fontSize: 11,
-                color: "var(--cms-accent-emerald)",
-              }}
-            >
-              <TrendingUp size={10} />
-              {trend}
-            </div>
-          )}
-        </div>
-
-        <div
-          style={{
-            color: "var(--cms-text-primary)",
-            fontSize: 32,
-            fontWeight: 700,
-            lineHeight: "40px",
-            letterSpacing: "-0.02em",
-            marginBottom: 4,
-          }}
-        >
-          {value}
-        </div>
-        <div style={{ color: "var(--cms-text-primary)", fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
-          {title}
-        </div>
-        <div style={{ color: "var(--cms-text-secondary)", fontSize: 12 }}>{sub}</div>
-      </div>
-    </GlassCard>
   );
 }
 
@@ -213,7 +138,7 @@ function QuickAction({
         display: "flex",
         alignItems: "center",
         gap: 14,
-        padding: "14px 18px",
+        padding: "12px 14px",
         background: done
           ? "rgba(16,185,129,0.06)"
           : "rgba(255,255,255,0.02)",
@@ -224,6 +149,7 @@ function QuickAction({
         textAlign: "left",
         fontFamily: "'Inter', sans-serif",
         transition: "background 150ms, border-color 150ms",
+        boxSizing: "border-box",
       }}
       className={!loading && !done ? "hover:bg-white/[0.04] hover:border-white/[0.12]" : ""}
     >
@@ -248,81 +174,96 @@ function QuickAction({
           <Icon size={15} style={{ color }} />
         )}
       </div>
-      <div>
-        <div style={{ color: done ? "var(--cms-accent-emerald)" : "var(--cms-text-primary)", fontSize: 13, fontWeight: 500, marginBottom: 2 }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ color: done ? "var(--cms-accent-emerald)" : "var(--cms-text-primary)", fontSize: 13, fontWeight: 500, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {done ? "Done!" : label}
         </div>
-        <div style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>{desc}</div>
+        <div style={{ color: "var(--cms-text-secondary)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</div>
       </div>
     </button>
   );
 }
 
-/* --- Main component ------------------------------------------- */
-
-/* --- Dynamic Traffic Data Generation (30 days up to today) --- */
-function generateDynamicTrafficData() {
-  const data = [];
-  const baseViews = 1200; // Starting baseline
-  const now = new Date();
-  
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(now.getDate() - i);
-    const dayLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    
-    // Simulate ~18% growth over 30 days with some randomized daily fluctuation
-    // Day 0: ~1200, Day 30: ~1416 (which is +18%)
-    const progress = (29 - i) / 29; // 0 to 1
-    const trend = baseViews * (1 + 0.18 * progress);
-    
-    // Add randomness (-8% to +8%)
-    const randomFactor = 1 + (Math.random() * 0.16 - 0.08);
-    const dailyViews = Math.floor(trend * randomFactor);
-    
-    data.push({ day: dayLabel, views: dailyViews });
-  }
-  return data;
-}
+/* --- Main Component ------------------------------------------- */
 
 export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) => void }) {
   const { siteDocument } = useMakeStore();
   const [rebuilding, setRebuilding] = useState(false);
   const [rebuildDone, setRebuildDone] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [liveData, setLiveData] = useState<{
-    commits: Array<{ hash: string; message: string; relativeTime: string }>;
-    categoryStats: Array<{ name: string; value: number; count: number }>;
-    unresolvedQueries: number;
-    coverageRate: number;
-    trafficData: Array<{ day: string; views: number }>;
-    trafficSource?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    async function fetchAnalytics() {
-      try {
-        const res = await fetch("/api/analytics");
-        if (res.ok) {
-          const json = await res.json();
-          if (json.ok) {
-            setLiveData(json);
-          }
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("cms_calendar_events");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse calendar events", e);
         }
-      } catch (e) {
-        console.error("Failed to load analytics data", e);
       }
     }
-    fetchAnalytics();
+    return [
+      { id: "1", date: "2026-08-03", title: "Deploy Astro 5.0 build to GitHub Pages", type: "event" },
+      { id: "2", date: "2026-08-04", title: "Review GA4 live traffic metrics", type: "note" },
+    ];
+  });
+  const [newNote, setNewNote] = useState("");
+
+  const updateEvents = (updater: (prev: CalendarEvent[]) => CalendarEvent[]) => {
+    setCalendarEvents((prev) => {
+      const next = updater(prev);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cms_calendar_events", JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
+  const [liveData, setLiveData] = useState<{
+    commits: Array<{ hash: string; message: string; relativeTime: string }>;
+    websiteTraffic: Array<{ day: string; views: number; activeUsers: number }>;
+    githubTraffic: Array<{ day: string; views: number; uniques: number }>;
+    unresolvedQueries?: number;
+    resolvedQueries?: number;
+    totalQueries?: number;
+    coverageRate?: number;
+    gaMetrics?: { activeUsers: number; eventCount: number; keyEvents: number; newUsers: number };
+    realtimeUsers?: number;
+  } | null>(null);
+
+  const fetchAnalytics = useCallback(async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    try {
+      const res = await fetch("/api/analytics");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.ok) {
+          setLiveData(json);
+          if (isManual) toast.success("Analytics Refreshed", { description: "Live property metrics synced." });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load analytics data", e);
+    } finally {
+      if (isManual) setTimeout(() => setIsRefreshing(false), 600);
+    }
   }, []);
 
-  const trafficData = liveData?.trafficData || generateDynamicTrafficData();
-  const categoryData = liveData?.categoryStats && liveData.categoryStats.length > 0 ? liveData.categoryStats : [
-    { name: "IOT", value: 33, count: 3 },
-    { name: "HEALTHCARE", value: 22, count: 2 },
-    { name: "WEB", value: 22, count: 2 },
-    { name: "AI", value: 22, count: 2 },
-  ];
+  useEffect(() => {
+    fetchAnalytics();
+    const interval = setInterval(() => fetchAnalytics(), 30000);
+    return () => clearInterval(interval);
+  }, [fetchAnalytics]);
+
+  const websiteTraffic = liveData?.websiteTraffic || [];
+  const githubTraffic = liveData?.githubTraffic || [];
+  const gaMetrics = liveData?.gaMetrics || { activeUsers: 0, eventCount: 0, keyEvents: 0, newUsers: 0 };
+  const realtimeUsers = liveData?.realtimeUsers ?? 0;
+  const totalQueries = liveData?.totalQueries ?? 0;
+  const coverageRate = liveData?.coverageRate ?? 100;
+  const unresolvedQueries = liveData?.unresolvedQueries ?? 0;
 
   const recentCommits = liveData?.commits && liveData.commits.length > 0 ? liveData.commits.map((c) => ({
     type: "commit",
@@ -338,10 +279,30 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
 
   const projectsCount = siteDocument?.projects?.length || 9;
   const skillsCount = (siteDocument?.skills || []).reduce((acc: number, c: any) => acc + (c.skills?.length || 0), 0) || 36;
-  const categoriesCount = siteDocument?.skills?.length || 6;
-  const experienceCount = siteDocument?.experience?.length || 4;
-  const latestCommitHash = recentCommits[0]?.meta || "bae0f65";
-  const todayStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  function handleAddNote() {
+    if (!newNote.trim()) return;
+    const entry: CalendarEvent = {
+      id: String(Date.now()),
+      date: todayStr,
+      title: newNote.trim(),
+      type: "note",
+    };
+    updateEvents((prev) => [...prev, entry]);
+    setNewNote("");
+    toast.success("Note added to calendar schedule");
+  }
+
+  function handleAddCalendarEvent(ev: CalendarEvent) {
+    updateEvents((prev) => [...prev, ev]);
+    toast.success(`${ev.type === "event" ? "Event" : "Note"} added for ${ev.date}`);
+  }
+
+  function handleDeleteEvent(id: string) {
+    updateEvents((prev) => prev.filter((e) => e.id !== id));
+    toast.info("Event removed");
+  }
 
   function handleRebuild() {
     setShowConfirm(false);
@@ -359,66 +320,152 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
       className="no-scrollbar"
       style={{
         flex: 1,
-        width: "100%",
-        paddingTop: 60,
-        height: "100vh",
+        height: "100%",
         overflowY: "auto",
-        overflowX: "hidden",
-        background: "var(--cms-bg-obsidian)",
+        background: "var(--cms-bg-dark)",
         fontFamily: "'Inter', sans-serif",
         boxSizing: "border-box",
       }}
     >
-      <div className="cms-mobile-padding" style={{ padding: "32px 36px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }}>
-        {/* Page title */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ color: "var(--cms-text-primary)", fontSize: 22, fontWeight: 700, margin: "0 0 4px", letterSpacing: "-0.01em" }}>
-            Analytics &amp; Dashboard
-          </h1>
-          <p style={{ color: "var(--cms-text-secondary)", fontSize: 13, margin: 0 }}>
-            Portfolio health, traffic, and content status — last synced {todayStr}
-          </p>
+      <div style={{ padding: "20px 16px", maxWidth: 1400, margin: "0 auto", boxSizing: "border-box" }} className="sm:p-8">
+        {/* Page Title & Header Actions */}
+        <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <h1 style={{ color: "var(--cms-text-primary)", fontSize: 20, fontWeight: 700, margin: "0 0 4px", letterSpacing: "-0.01em" }} className="sm:text-2xl">
+              Google Analytics &amp; Website Overview
+            </h1>
+            <p style={{ color: "var(--cms-text-secondary)", fontSize: 12, margin: 0 }} className="sm:text-sm">
+              Live property analytics for lalitkishore.is-a.dev — synced {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button
+              onClick={() => fetchAnalytics(true)}
+              disabled={isRefreshing}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--cms-border-glass)",
+                borderRadius: 8,
+                color: "var(--cms-text-primary)",
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: isRefreshing ? "default" : "pointer",
+                transition: "background 150ms",
+              }}
+              className="hover:bg-white/[0.08]"
+            >
+              <RefreshCw size={13} className={isRefreshing ? "animate-spin text-blue-400" : "text-gray-400"} />
+              <span>{isRefreshing ? "Syncing..." : "Refresh Analytics"}</span>
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8 }}>
+              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+              <span style={{ color: "var(--cms-accent-emerald)", fontSize: 12, fontWeight: 600 }}>Property Connected</span>
+            </div>
+          </div>
         </div>
 
-        {/* KPI Row */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 24 }}>
-          <KpiCard
-            title="Projects Shipped"
-            value={`${projectsCount} Active`}
-            sub={`${projectsCount} entries in content/projects.json`}
-            icon={Globe}
-            accentColor="var(--cms-accent-cobalt)"
-            trend="100% Live & Validated"
-          />
-          <KpiCard
-            title="Skill Stack Coverage"
-            value={`${skillsCount} Skills`}
-            sub={`Across ${categoriesCount} technical categories`}
-            icon={Bot}
-            accentColor="#a78bfa"
-            trend="Fully Indexed"
-          />
-          <KpiCard
-            title="Content Sync Status"
-            value="Synced"
-            sub={`${projectsCount} Projects · ${experienceCount} Milestones`}
-            icon={Github}
-            accentColor="var(--cms-accent-emerald)"
-          />
-        </div>
+        {/* Google Analytics Home Metrics Banner */}
+        <GlassCard style={{ marginBottom: 20, padding: "16px 20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
+            {/* Active Users */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 4 }}>
+                <Users size={14} style={{ color: "#3b82f6" }} />
+                Active Users
+              </div>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 28, fontWeight: 700, lineHeight: "32px" }}>
+                {gaMetrics.activeUsers}
+              </div>
+              <div style={{ color: "#3b82f6", fontSize: 11, fontWeight: 500, marginTop: 2 }}>
+                Last 30 Days
+              </div>
+            </div>
 
-        {/* Main grid: chart + sidebar */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginBottom: 20 }}>
-          {/* Neon traffic chart */}
+            {/* Event Count */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 4 }}>
+                <Activity size={14} style={{ color: "#10b981" }} />
+                Event Count
+              </div>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 28, fontWeight: 700, lineHeight: "32px" }}>
+                {gaMetrics.eventCount}
+              </div>
+              <div style={{ color: "#10b981", fontSize: 11, fontWeight: 500, marginTop: 2 }}>
+                Recorded Events
+              </div>
+            </div>
+
+            {/* Key Events */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 4 }}>
+                <Zap size={14} style={{ color: "#a78bfa" }} />
+                Key Events
+              </div>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 28, fontWeight: 700, lineHeight: "32px" }}>
+                {gaMetrics.keyEvents}
+              </div>
+              <div style={{ color: "var(--cms-text-secondary)", fontSize: 11, marginTop: 2 }}>
+                Conversions
+              </div>
+            </div>
+
+            {/* New Users */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 4 }}>
+                <UserCheck size={14} style={{ color: "#f59e0b" }} />
+                New Users
+              </div>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 28, fontWeight: 700, lineHeight: "32px" }}>
+                {gaMetrics.newUsers}
+              </div>
+              <div style={{ color: "#f59e0b", fontSize: 11, fontWeight: 500, marginTop: 2 }}>
+                Unique Visitors
+              </div>
+            </div>
+
+            {/* Realtime Users */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 4 }}>
+                <Globe size={14} style={{ color: "#06b6d4" }} />
+                <span>Realtime Users</span>
+                <span style={{
+                  display: "inline-block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: realtimeUsers > 0 ? "#10b981" : "#6b7280",
+                  boxShadow: realtimeUsers > 0 ? "0 0 6px #10b981" : "none",
+                  marginLeft: 2,
+                }} />
+              </div>
+              <div style={{ color: realtimeUsers > 0 ? "#10b981" : "var(--cms-text-primary)", fontSize: 28, fontWeight: 700, lineHeight: "32px" }}>
+                {realtimeUsers}
+              </div>
+              <div style={{ color: "#06b6d4", fontSize: 11, fontWeight: 500, marginTop: 2 }}>
+                Active in Last 30 Min
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Dual Traffic Grid: Website Traffic (GA4) + Repository Traffic (GitHub) */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
+          {/* Chart 1: Website Traffic (GA4) */}
           <GlassCard>
-            <div style={{ padding: "22px 24px 12px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <div style={{ padding: "18px 20px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
                 <div>
-                  <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600 }}>
-                    Portfolio Traffic
+                  <div style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600 }}>
+                    Website Traffic (Google Analytics 4)
                   </div>
-                  <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, marginTop: 2 }}>
-                    {liveData?.trafficSource === "GA4" ? "Daily website views (Last 30 days)" : "Daily repository views (Last 14 days)"}
+                  <div style={{ color: "var(--cms-text-secondary)", fontSize: 11, marginTop: 2 }}>
+                    Daily Active Users &amp; Page Views (Last 14 days)
                   </div>
                 </div>
                 <div
@@ -426,115 +473,160 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    padding: "4px 10px",
+                    padding: "3px 8px",
                     background: "rgba(59,130,246,0.08)",
                     border: "1px solid rgba(59,130,246,0.18)",
                     borderRadius: 20,
-                    fontSize: 11,
-                    color: "var(--cms-accent-cobalt)",
+                    fontSize: 10,
+                    color: "#3b82f6",
                   }}
                 >
                   <TrendingUp size={11} />
-                  {liveData?.trafficSource === "GA4" ? "Live Website Data (GA4)" : "Live GitHub Data"}
+                  Live GA4 Data
                 </div>
               </div>
 
-              <div style={{ height: 220 }}>
+              <div style={{ height: 210 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={trafficData} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
+                  <AreaChart data={websiteTraffic} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                     <XAxis
                       dataKey="day"
                       tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
-                      interval={4}
+                      interval={1}
                     />
                     <YAxis
                       tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)}
                     />
-                    <Tooltip content={<CustomTooltip />} cursor={{ stroke: "rgba(59,130,246,0.2)", strokeWidth: 1 }} />
+                    <Tooltip content={<CustomWebsiteTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="activeUsers"
+                      name="Active Users"
+                      stroke="#3b82f6"
+                      strokeWidth={2.5}
+                      fill="rgba(59,130,246,0.14)"
+                      dot={{ r: 3, fill: "#3b82f6" }}
+                    />
                     <Area
                       type="monotone"
                       dataKey="views"
-                      stroke="#3b82f6"
-                      strokeWidth={2.5}
-                      fill="rgba(59,130,246,0.12)"
-                      dot={false}
-                      activeDot={{
-                        r: 5,
-                        fill: "#3b82f6",
-                        stroke: "rgba(59,130,246,0.4)",
-                        strokeWidth: 4,
-                      }}
-                      style={{ filter: "drop-shadow(0 0 6px rgba(59,130,246,0.6))" }}
+                      name="Page Views"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      fill="rgba(16,185,129,0.08)"
+                      dot={{ r: 2, fill: "#10b981" }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
+
+              <div style={{ display: "flex", gap: 16, marginTop: 10, justifyContent: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--cms-text-secondary)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#3b82f6" }} />
+                  Active Users
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--cms-text-secondary)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#10b981" }} />
+                  Page Views
+                </div>
+              </div>
             </div>
           </GlassCard>
 
-          {/* Category Breakdown bar chart */}
+          {/* Chart 2: Repository Traffic (GitHub) */}
           <GlassCard>
-            <div style={{ padding: "22px 20px" }}>
-              <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Project Domain Breakdown
+            <div style={{ padding: "18px 20px 12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600 }}>
+                    Repository Traffic (GitHub REST API)
+                  </div>
+                  <div style={{ color: "var(--cms-text-secondary)", fontSize: 11, marginTop: 2 }}>
+                    Daily Views &amp; Unique Visitors (Last 14 days)
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "3px 8px",
+                    background: "rgba(167,139,250,0.08)",
+                    border: "1px solid rgba(167,139,250,0.18)",
+                    borderRadius: 20,
+                    fontSize: 10,
+                    color: "#a78bfa",
+                  }}
+                >
+                  <Github size={11} />
+                  Live GitHub Data
+                </div>
               </div>
-              <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, marginBottom: 20 }}>
-                Distribution across 9 projects in content/projects.json
-              </div>
-              <div style={{ height: 180 }}>
+
+              <div style={{ height: 210 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart id="analytics-referrer-chart" data={categoryData} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
-                    <XAxis type="number" hide />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fill: "#a1a1aa", fontSize: 11, fontFamily: "'Inter', sans-serif" }}
+                  <AreaChart data={githubTraffic} margin={{ top: 10, right: 4, bottom: 0, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
                       axisLine={false}
                       tickLine={false}
-                      width={85}
+                      interval={1}
                     />
-                    <Tooltip
-                      cursor={{ fill: "rgba(255,255,255,0.02)" }}
-                      content={({ active, payload }) =>
-                        active && payload?.length ? (
-                          <div style={{ background: "var(--cms-bg-card)", border: "1px solid var(--cms-border-dark)", borderRadius: 6, padding: "6px 10px", fontSize: 12, color: "var(--cms-text-primary)", fontFamily: "'Inter', sans-serif" }}>
-                            {payload[0].payload.name}: {payload[0].value}% ({payload[0].payload.count} projects)
-                          </div>
-                        ) : null
-                      }
+                    <YAxis
+                      tick={{ fill: "#a1a1aa", fontSize: 10, fontFamily: "'Inter', sans-serif" }}
+                      axisLine={false}
+                      tickLine={false}
                     />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      {categoryData.map((_, i) => (
-                        <RechartsCell key={i} fill={REFERRER_COLORS[i % REFERRER_COLORS.length]} opacity={0.85} />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                    <Tooltip content={<CustomGithubTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="views"
+                      name="Repo Views"
+                      stroke="#a78bfa"
+                      strokeWidth={2.5}
+                      fill="rgba(167,139,250,0.14)"
+                      dot={{ r: 3, fill: "#a78bfa" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="uniques"
+                      name="Unique Visitors"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      fill="rgba(245,158,11,0.08)"
+                      dot={{ r: 2, fill: "#f59e0b" }}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px", marginTop: 12 }}>
-                {categoryData.map((r, i) => (
-                  <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--cms-text-secondary)" }}>
-                    <span style={{ width: 8, height: 8, borderRadius: 2, background: REFERRER_COLORS[i % REFERRER_COLORS.length], display: "inline-block" }} />
-                    {r.name} <span style={{ color: REFERRER_COLORS[i % REFERRER_COLORS.length] }}>{r.value}%</span>
-                  </div>
-                ))}
+
+              <div style={{ display: "flex", gap: 16, marginTop: 10, justifyContent: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--cms-text-secondary)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#a78bfa" }} />
+                  Repo Views
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--cms-text-secondary)" }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: "#f59e0b" }} />
+                  Unique Visitors
+                </div>
               </div>
             </div>
           </GlassCard>
         </div>
 
-        {/* Bottom grid: Quick Actions + Activity + Calendar */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
+        {/* Row 3 Grid: Quick Actions + Activity + Chatbot Health Card */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
           {/* Quick Actions */}
           <GlassCard>
-            <div style={{ padding: "20px 22px" }}>
-              <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
+            <div style={{ padding: "18px 20px" }}>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600, marginBottom: 14 }}>
                 Quick Actions
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -572,10 +664,10 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
             </div>
           </GlassCard>
 
-          {/* Recent Activity */}
+          {/* Recent Git Activity */}
           <GlassCard>
-            <div style={{ padding: "20px 22px" }}>
-              <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
+            <div style={{ padding: "18px 20px" }}>
+              <div style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600, marginBottom: 14 }}>
                 Recent Git Activity
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
@@ -588,16 +680,16 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 12,
-                        padding: "12px 0",
+                        gap: 10,
+                        padding: "10px 0",
                         borderBottom: i < arr.length - 1 ? "1px solid var(--cms-border-dark)" : "none",
                       }}
                     >
                       <div
                         style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 9,
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
                           background: `${color}14`,
                           border: `1px solid ${color}26`,
                           display: "flex",
@@ -606,17 +698,17 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
                           flexShrink: 0,
                         }}
                       >
-                        <Icon size={14} style={{ color }} />
+                        <Icon size={13} style={{ color }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ color: "var(--cms-text-primary)", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.text}</div>
-                        <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
-                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>{item.meta}</span>
-                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>·</span>
-                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 11 }}>{item.time}</span>
+                        <div style={{ color: "var(--cms-text-primary)", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.text}</div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>{item.meta}</span>
+                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 10 }}>·</span>
+                          <span style={{ color: "var(--cms-text-secondary)", fontSize: 10 }}>{item.time}</span>
                         </div>
                       </div>
-                      <a href={`https://github.com/Lalitkishore2/portfolio-manager/commit/${item.meta}`} target="_blank" rel="noreferrer" style={{ color: "var(--cms-accent-cobalt)", fontSize: 11, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
+                      <a href={`https://github.com/Lalitkishore2/portfolio-manager/commit/${item.meta}`} target="_blank" rel="noreferrer" style={{ color: "var(--cms-accent-cobalt)", fontSize: 10, textDecoration: "none", display: "flex", alignItems: "center", gap: 3, opacity: 0.7 }} className="hover:opacity-100">
                         <ExternalLink size={10} />
                       </a>
                     </div>
@@ -626,28 +718,201 @@ export function AnalyticsDashboard({ onNavigate }: { onNavigate?: (view: any) =>
             </div>
           </GlassCard>
 
-          {/* Glass Calendar Component */}
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <GlassCalendar className="h-full" />
-          </div>
+          {/* Chatbot Auditor Card */}
+          <GlassCard>
+            <div style={{ padding: "18px 20px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Bot size={16} style={{ color: "#a78bfa" }} />
+                    <span style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600 }}>
+                      Chatbot Query Health
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: 10,
+                    padding: "2px 8px",
+                    background: coverageRate >= 80 ? "rgba(16,185,129,0.1)" : coverageRate >= 50 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                    border: `1px solid ${coverageRate >= 80 ? "rgba(16,185,129,0.2)" : coverageRate >= 50 ? "rgba(245,158,11,0.2)" : "rgba(239,68,68,0.2)"}`,
+                    borderRadius: 12,
+                    color: coverageRate >= 80 ? "#10b981" : coverageRate >= 50 ? "#f59e0b" : "#ef4444",
+                    fontWeight: 600,
+                  }}>
+                    {coverageRate}% Resolved
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--cms-border-glass)", borderRadius: 8, padding: 10 }}>
+                    <div style={{ color: "var(--cms-text-secondary)", fontSize: 10, marginBottom: 2 }}>Total Queries</div>
+                    <div style={{ color: "var(--cms-text-primary)", fontSize: 20, fontWeight: 700 }}>{totalQueries}</div>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--cms-border-glass)", borderRadius: 8, padding: 10 }}>
+                    <div style={{ color: "var(--cms-text-secondary)", fontSize: 10, marginBottom: 2 }}>Resolution Rate</div>
+                    <div style={{ color: "#10b981", fontSize: 20, fontWeight: 700 }}>{coverageRate}%</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--cms-text-secondary)", fontSize: 11, marginBottom: 12 }}>
+                  <CheckCircle2 size={13} style={{ color: "#10b981" }} />
+                  <span>Unresolved Queries: <strong style={{ color: "var(--cms-text-primary)" }}>{unresolvedQueries}</strong></span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onNavigate?.("chatbot")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  width: "100%",
+                  padding: "9px",
+                  background: "rgba(167,139,250,0.1)",
+                  border: "1px solid rgba(167,139,250,0.25)",
+                  borderRadius: 8,
+                  color: "#a78bfa",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 150ms ease",
+                }}
+                className="hover:bg-purple-500/20"
+              >
+                <span>Open Chatbot Auditor</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+
+        {/* Row 4 Section: Interactive Glass Calendar & Developer Event Notes */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
+          {/* Glass Calendar */}
+          <GlassCard style={{ padding: 16 }}>
+            <GlassCalendar
+              events={calendarEvents}
+              onAddEvent={handleAddCalendarEvent}
+              className="w-full"
+            />
+          </GlassCard>
+
+          {/* Developer Calendar Notes & Task Schedule */}
+          <GlassCard style={{ padding: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <CalendarIcon size={16} style={{ color: "#f59e0b" }} />
+                <span style={{ color: "var(--cms-text-primary)", fontSize: 14, fontWeight: 600 }}>
+                  Calendar Notes &amp; Schedule
+                </span>
+              </div>
+              <span style={{ fontSize: 10, padding: "2px 8px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, color: "#f59e0b" }}>
+                {calendarEvents.length} Entries
+              </span>
+            </div>
+
+            {/* Note Input */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <input
+                type="text"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                placeholder="Add a new calendar note..."
+                style={{
+                  flex: 1,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--cms-border-glass)",
+                  borderRadius: 8,
+                  padding: "8px 10px",
+                  color: "var(--cms-text-primary)",
+                  fontSize: 12,
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={handleAddNote}
+                style={{
+                  background: "rgba(245,158,11,0.15)",
+                  border: "1px solid rgba(245,158,11,0.3)",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  color: "#f59e0b",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                }}
+              >
+                <Plus size={13} />
+                <span>Add</span>
+              </button>
+            </div>
+
+            {/* Note List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 310, overflowY: "auto" }} className="no-scrollbar">
+              {calendarEvents.map((n) => (
+                <div
+                  key={n.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: 10,
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid var(--cms-border-glass)",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+                    <FileText size={14} style={{ color: n.type === "event" ? "#a78bfa" : "#f59e0b", flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ color: "var(--cms-text-primary)", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.title}</div>
+                      <div style={{ color: "var(--cms-text-secondary)", fontSize: 10, marginTop: 1 }}>{n.date}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 9, padding: "2px 6px", background: n.type === "event" ? "rgba(167,139,250,0.1)" : "rgba(245,158,11,0.1)", borderRadius: 8, color: n.type === "event" ? "#a78bfa" : "#f59e0b", border: "1px solid var(--cms-border-glass)" }}>
+                      {n.type}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteEvent(n.id)}
+                      style={{ color: "#ef4444", background: "none", border: "none", cursor: "pointer", opacity: 0.6, padding: 3 }}
+                      className="hover:opacity-100"
+                      title="Delete event"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {calendarEvents.length === 0 && (
+                <div style={{ color: "var(--cms-text-secondary)", fontSize: 11, textAlign: "center", padding: "16px 0", fontStyle: "italic" }}>
+                  No calendar notes or scheduled events yet.
+                </div>
+              )}
+            </div>
+          </GlassCard>
         </div>
       </div>
 
-      {/* Rebuild confirm modal */}
+      {/* Rebuild Confirm Modal */}
       {showConfirm && (
         <div
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
           onClick={() => setShowConfirm(false)}
         >
           <div
-            style={{ background: "var(--cms-bg-card)", border: "1px solid var(--cms-border-dark)", borderRadius: 14, padding: 28, width: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}
+            style={{ background: "var(--cms-bg-card)", border: "1px solid var(--cms-border-dark)", borderRadius: 14, padding: 24, width: "100%", maxWidth: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 20 }}>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 18 }}>
               <AlertTriangle size={20} style={{ color: "var(--cms-accent-rose)", marginTop: 2, flexShrink: 0 }} />
               <div>
-                <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 6 }}>Force Rebuild Website?</div>
-                <div style={{ color: "var(--cms-text-secondary)", fontSize: 13, lineHeight: "20px" }}>
+                <div style={{ color: "var(--cms-text-primary)", fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Force Rebuild Website?</div>
+                <div style={{ color: "var(--cms-text-secondary)", fontSize: 12, lineHeight: "18px" }}>
                   This triggers a GitHub Pages CI run immediately. The site may be briefly unavailable (~2–3 min).
                 </div>
               </div>

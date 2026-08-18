@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
   ArrowLeft, Monitor, Tablet, Smartphone, Maximize2, Undo2, Redo2, 
-  Sparkles, Layers, Sliders, Save, Check, ChevronDown, ZoomIn, ZoomOut,
-  FolderGit2, Code2, Play, Layout, Palette
+  Sparkles, Layers, Sliders, Save, Check, ChevronDown, Share2, Copy,
+  FolderGit2, Code2, Play, Layout, Palette, ExternalLink
 } from 'lucide-react';
 import { useMakeStore } from '@/store/makeStore';
 
@@ -32,6 +32,7 @@ export function StudioTopBar({
 
   const [zoomDropdownOpen, setZoomDropdownOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   function handleUndo() {
     const idx = versions.findIndex((v) => v.id === currentVersionId);
@@ -49,6 +50,12 @@ export function StudioTopBar({
     setTimeout(() => setIsSaved(false), 2000);
   };
 
+  const copyLiveLink = () => {
+    navigator.clipboard.writeText("http://localhost:4321");
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   const sections = [
     { id: "projects", label: "Projects Database" },
     { id: "profile", label: "Profile & Bio" },
@@ -60,7 +67,7 @@ export function StudioTopBar({
 
   return (
     <header className="h-12 bg-[#1E1E1E] border-b border-white/[0.08] px-3 flex items-center justify-between shrink-0 select-none z-30 gap-3 no-scrollbar overflow-x-auto text-zinc-200">
-      {/* Left: Branding, Document Breadcrumb & Section Quick Jump */}
+      {/* Left: Figma Logo / File Name Breadcrumb (Deconstructivist Portfolio Design System) */}
       <div className="flex items-center gap-2.5 shrink-0">
         <button
           onClick={onBack}
@@ -71,24 +78,32 @@ export function StudioTopBar({
         </button>
 
         <div className="flex items-center gap-2 pl-1">
+          {/* Figma Make Icon */}
           <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded bg-gradient-to-tr from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-sm">
-              <Sparkles size={10} className="text-white" />
+            <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-violet-600 via-fuchsia-500 to-blue-500 flex items-center justify-center shadow-sm">
+              <Sparkles size={11} className="text-white" />
             </div>
-            <span className="text-xs font-semibold tracking-tight text-white">Make Studio</span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold tracking-tight text-white leading-none">
+                Deconstructivist Portfolio
+              </span>
+              <span className="text-[9px] font-mono text-zinc-400 leading-tight">
+                Design System · Make
+              </span>
+            </div>
           </div>
 
-          <span className="text-zinc-600 text-xs">/</span>
+          <span className="text-zinc-600 text-xs font-mono">/</span>
 
-          {/* Section Jump Dropdown */}
+          {/* Active Target Section Quick Switcher */}
           <div className="relative group">
             <select
               value={targetSection}
               onChange={(e) => onSelectTargetSection(e.target.value)}
-              className="bg-transparent text-xs font-medium text-blue-400 hover:text-blue-300 outline-none cursor-pointer pr-4 appearance-none transition-colors"
+              className="bg-transparent text-xs font-semibold text-[#0D99FF] hover:text-blue-300 outline-none cursor-pointer pr-4 appearance-none transition-colors"
             >
               {sections.map((sec) => (
-                <option key={sec.id} value={sec.id} className="bg-[#2C2C2C] text-zinc-200">
+                <option key={sec.id} value={sec.id} className="bg-[#2C2C2C] text-zinc-200 font-normal">
                   {sec.label}
                 </option>
               ))}
@@ -98,15 +113,15 @@ export function StudioTopBar({
         </div>
       </div>
 
-      {/* Center: Figma-Style Segmented Viewport Switcher & Zoom Controls */}
+      {/* Center: Figma Centered Segmented Device Frame Switcher & Zoom */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Device Mode Switcher */}
+        {/* Segmented Device Viewport Switcher */}
         <div className="flex items-center gap-0.5 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5 shadow-inner">
           {[
-            { mode: "desktop" as const, label: "1440", icon: Monitor, tooltip: "Desktop (1440 × 900)" },
-            { mode: "tablet" as const, label: "768", icon: Tablet, tooltip: "Tablet (768 × 1024)" },
-            { mode: "mobile" as const, label: "390", icon: Smartphone, tooltip: "Mobile (390 × 844)" },
-            { mode: "fluid" as const, label: "Fit", icon: Maximize2, tooltip: "Fluid Canvas Fit" }
+            { mode: "desktop" as const, label: "1440", icon: Monitor, tooltip: "Desktop Frame (1440 × 900)" },
+            { mode: "tablet" as const, label: "768", icon: Tablet, tooltip: "iPad Pro Frame (768 × 1024)" },
+            { mode: "mobile" as const, label: "390", icon: Smartphone, tooltip: "iPhone 15 Frame (390 × 844)" },
+            { mode: "fluid" as const, label: "Fit", icon: Maximize2, tooltip: "Fluid Responsive Canvas" }
           ].map(({ mode, label, icon: Icon, tooltip }) => (
             <button
               key={mode}
@@ -164,7 +179,7 @@ export function StudioTopBar({
         </div>
       </div>
 
-      {/* Right: History, Model Selector, Inspector Toggles & Save */}
+      {/* Right: Share, History, AI Model, Panels & Save */}
       <div className="flex items-center gap-2 shrink-0">
         {/* Undo / Redo */}
         <div className="flex items-center gap-0.5 bg-[#2C2C2C] border border-white/[0.06] rounded-lg p-0.5">
@@ -186,6 +201,16 @@ export function StudioTopBar({
           </button>
         </div>
 
+        {/* Share / Live Preview Link */}
+        <button
+          onClick={copyLiveLink}
+          className="px-2 py-1 bg-[#2C2C2C] hover:bg-white/[0.08] border border-white/[0.06] rounded-lg text-zinc-300 hover:text-white text-[11px] font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+          title="Copy Live Preview URL"
+        >
+          {copiedLink ? <Check size={12} className="text-emerald-400" /> : <Share2 size={12} />}
+          <span className="hidden xl:inline">{copiedLink ? "Copied!" : "Share"}</span>
+        </button>
+
         {/* AI Provider Switcher */}
         <div className="hidden lg:flex items-center">
           <select
@@ -202,7 +227,7 @@ export function StudioTopBar({
           </select>
         </div>
 
-        {/* Layer Tree Toggle */}
+        {/* Left Layer Tree Toggle */}
         <button
           onClick={() => setLeftOpen(!leftOpen)}
           className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
