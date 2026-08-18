@@ -353,16 +353,18 @@ export default function App({
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      <CMSSidebar
-        activeView={activeView}
-        onNavigate={handleNavigate}
-        onPublish={handlePublish}
-        publishing={publishing}
-        published={published}
-      />
+      {activeView !== "make" && (
+        <CMSSidebar
+          activeView={activeView}
+          onNavigate={handleNavigate}
+          onPublish={handlePublish}
+          publishing={publishing}
+          published={published}
+        />
+      )}
 
       {/* Main content */}
-      <div className="cms-main-viewport" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div className="cms-main-viewport" style={{ flex: 1, display: "flex", overflow: "hidden", width: activeView === "make" ? "100dvw" : "auto" }}>
         {renderMain()}
       </div>
 

@@ -5,6 +5,7 @@ import {
   CheckCircle2, AlertTriangle, Shield, Check, RotateCcw, Brain, FileCode2
 } from 'lucide-react';
 import { useMakeStore } from '@/store/makeStore';
+import { toast } from 'sonner';
 
 interface StudioAiSidebarProps {
   onBack: () => void;
@@ -230,10 +231,25 @@ export function StudioAiSidebar({
               </div>
             )}
 
-            {/* AI Bot Response Text */}
+            {/* AI Bot Response Text with Copy Button */}
             {m.type === "bot" && (
-              <div className="self-start bg-[#242424] border border-white/[0.08] rounded-2xl rounded-tl-sm px-3.5 py-2.5 text-zinc-200 max-w-[95%] leading-relaxed shadow-sm">
+              <div className="self-start bg-[#242424] border border-white/[0.08] rounded-2xl rounded-tl-sm p-3.5 text-zinc-200 max-w-[95%] leading-relaxed shadow-sm group relative">
                 <p>{m.content}</p>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/[0.04]">
+                  <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-mono">
+                    <FileCode2 size={11} className="text-purple-400" />
+                    <span>1 edited file</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(m.content || "");
+                      toast.success("Copied to clipboard");
+                    }}
+                    className="text-[10px] text-zinc-500 hover:text-zinc-200 px-1.5 py-0.5 rounded hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -248,21 +264,32 @@ export function StudioAiSidebar({
             <span className="text-[11px] text-zinc-300">Selected on canvas</span>
             <button
               onClick={() => setSelectedNodeId(null)}
-              className="ml-auto text-zinc-500 hover:text-white p-1"
+              className="ml-auto text-zinc-500 hover:text-white p-1 cursor-pointer"
             >
               <X size={11} />
             </button>
           </div>
         )}
 
-        {/* Ghost Diff Sticky Review Card if proposed */}
+        {/* Ghost Diff & Code Review Card (Exact Figma Make Code Review Style) */}
         {ghostDiff && (
           <div className="p-3 bg-purple-950/30 border border-purple-500/30 rounded-xl flex flex-col gap-2 shadow-lg animate-in slide-in-from-bottom-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-purple-300">AI Proposed Patch</span>
+              <span className="font-semibold text-purple-300 flex items-center gap-1.5">
+                <Sparkles size={12} className="text-purple-400" />
+                <span>Code Review &amp; Proposed Changes</span>
+              </span>
               <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-semibold">Preview Ready</span>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Code review diff preview */}
+            <div className="p-2 bg-[#141414] border border-white/5 rounded-lg text-[10px] font-mono text-zinc-400 max-h-36 overflow-y-auto no-scrollbar flex flex-col gap-0.5">
+              <span className="text-purple-400 font-semibold mb-1">Target: {targetSection}.json</span>
+              <div className="text-emerald-400 bg-emerald-500/10 px-1 py-0.5 rounded">+ Schema updated with AI synthesized patch</div>
+              <div className="text-zinc-500 bg-white/[0.02] px-1 py-0.5 rounded">  Review real-time live preview on the right canvas</div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={handleAccept}
                 className="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all shadow-md cursor-pointer active:scale-95"
