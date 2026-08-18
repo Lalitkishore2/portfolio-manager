@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Eye, Sparkles } from "lucide-react";
 import { useMakeStore } from "../../store/makeStore";
-import { StudioTopBar } from "./make/StudioTopBar";
-import { StudioLeftTree } from "./make/StudioLeftTree";
+import { StudioAiSidebar } from "./make/StudioAiSidebar";
+import { StudioBrowserBar } from "./make/StudioBrowserBar";
 import { StudioCanvas } from "./make/StudioCanvas";
 import { StudioRightInspector } from "./make/StudioRightInspector";
-import { StudioStatusBar } from "./make/StudioStatusBar";
 import { FigmaElement } from "./make/types";
 
 interface MakePageProps {
@@ -32,9 +31,10 @@ export function MakePage({ onBack }: MakePageProps) {
   // Local state
   const [targetSection, setTargetSection] = useState<string>("projects");
   const [selectedFigmaElement, setSelectedFigmaElement] = useState<FigmaElement | null>(null);
-  const [layerNodes, setLayerNodes] = useState<string[]>([]);
   const [rawCode, setRawCode] = useState<string>("");
-  const [mobileTab, setMobileTab] = useState<"preview" | "editor">("preview");
+  const [isCodeView, setIsCodeView] = useState<boolean>(false);
+  const [currentPath, setCurrentPath] = useState<string>("/");
+  const [mobileTab, setMobileTab] = useState<"ai" | "canvas" | "inspector">("ai");
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -84,9 +84,6 @@ export function MakePage({ onBack }: MakePageProps) {
         }
         if (nodeData) { setRawCode(JSON.stringify(nodeData, null, 2)); return; }
         setRawCode(JSON.stringify(data, null, 2)); return;
-      } else {
-        setRawCode(JSON.stringify({ _type: "layout_node", _message: "This node does not have associated CMS data." }, null, 2));
-        return;
       }
     }
     setRawCode(JSON.stringify(siteDocument, null, 2));
@@ -128,11 +125,6 @@ export function MakePage({ onBack }: MakePageProps) {
         const payload = event.data.payload as FigmaElement;
         setSelectedFigmaElement(payload);
         if (payload.nodeId) setSelectedNodeId(payload.nodeId);
-        setRightOpen(true);
-        setInspectTab("properties");
-      }
-      if (event.data?.type === "FIGMA_NODE_LIST") {
-        setLayerNodes(event.data.payload || []);
       }
       if (event.data?.type === "FIGMA_AUDIT_REPORT") {
         setAuditReport(event.data.payload);
@@ -143,11 +135,20 @@ export function MakePage({ onBack }: MakePageProps) {
     return () => window.removeEventListener("message", onMsg);
   }, []);
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: "FIGMA_INSPECT_TOGGLE", payload: isInspectEnabled }, "*");
-  }, [isInspectEnabled]);
-
   /* ─── Actions ────────────────────────────────────────────────── */
+
+  function handleNavigatePath(path: string) {
+    setCurrentPath(path);
+    if (iframeRef.current) {
+      iframeRef.current.src = `http://localhost:4321${path === "/" ? "" : path}`;
+    }
+  }
+
+  function handleReload() {
+    if (iframeRef.current) {
+      iframeRef.current.src = iframeRef.current.src;
+    }
+  }
 
   async function runAudit() {
     setIsAuditing(true);
@@ -203,19 +204,17 @@ export function MakePage({ onBack }: MakePageProps) {
       setGhostDiff({ before, after });
       const newDoc = { ...siteDocument, [targetSection]: after };
       setSiteDocument(newDoc);
-      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      handleReload();
 
       setMessages((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
           type: "bot",
-          content: `Done! I've proposed updates to "${targetSection}". Review the live preview on the canvas and accept or discard.`,
+          content: `Done! I've updated the "${targetSection}" section. Review the preview on the right canvas.`,
         },
       ]);
       setGenerationState("result");
-      setRightOpen(true);
-      setInspectTab("chat");
     } catch (err: any) {
       clearInterval(interval);
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), type: "error", content: err?.message || "Something went wrong." }]);
@@ -250,7 +249,7 @@ export function MakePage({ onBack }: MakePageProps) {
         const newDoc = { ...siteDocument, [section]: updatedSection };
         addVersion("Manual Code Edit", newDoc);
         setSiteDocument(newDoc);
-        if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+        handleReload();
       }
     } catch { alert("Invalid JSON"); }
   }
@@ -266,7 +265,7 @@ export function MakePage({ onBack }: MakePageProps) {
         });
       }));
       revertToVersion(v.id);
-      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      handleReload();
     } catch (e) { console.error(e); }
   }
 
@@ -285,7 +284,7 @@ export function MakePage({ onBack }: MakePageProps) {
           addVersion(`AI: ${targetSection} update`, newDoc);
           setGhostDiff(null);
           setGenerationState("idle");
-          if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+          handleReload();
         }
       }
     } catch (e) { console.error(e); }
@@ -299,7 +298,7 @@ export function MakePage({ onBack }: MakePageProps) {
       setSiteDocument(newDoc);
       setGhostDiff(null);
       setGenerationState("idle");
-      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      handleReload();
     }
   }
 
@@ -323,88 +322,71 @@ export function MakePage({ onBack }: MakePageProps) {
       const newDoc = { ...siteDocument, [section]: updatedSection };
       addVersion(`Edit ${selectedNodeId}`, newDoc);
       setSiteDocument(newDoc);
-      if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
+      handleReload();
     }
   }
 
   return (
-    <div className="cms-viewport-fill flex flex-col h-[100dvh] w-[100dvw] bg-[#1E1E1E] text-zinc-100 font-sans overflow-hidden select-none">
-      {/* 1. Studio Top Command Bar */}
-      <StudioTopBar
-        onBack={onBack}
-        targetSection={targetSection}
-        onSelectTargetSection={setTargetSection}
-        handleSaveCode={handleSaveCode}
-      />
-
+    <div className="cms-viewport-fill flex h-[100dvh] w-[100dvw] bg-[#1E1E1E] text-zinc-100 font-sans overflow-hidden select-none">
       {/* Mobile Tab Switcher (< md screens) */}
-      <div className="md:hidden flex items-center justify-center gap-2 p-2 border-b border-white/[0.08] bg-[#1E1E1E] shrink-0">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-10 bg-[#1E1E1E] border-b border-white/10 flex items-center justify-around z-50 text-xs">
         <button
-          onClick={() => setMobileTab("preview")}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "8px 12px",
-            background: mobileTab === "preview" ? "#0D99FF" : "transparent",
-            border: mobileTab === "preview" ? "1px solid #38bdf8" : "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 8,
-            color: mobileTab === "preview" ? "#ffffff" : "#a1a1aa",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer"
-          }}
+          onClick={() => setMobileTab("ai")}
+          className={`py-1 px-3 rounded-md font-semibold ${mobileTab === "ai" ? "bg-[#0D99FF] text-white" : "text-zinc-400"}`}
         >
-          <Eye size={14} />
-          <span>Canvas View</span>
+          AI Chat
         </button>
-
         <button
-          onClick={() => setMobileTab("editor")}
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "8px 12px",
-            background: mobileTab === "editor" ? "#9333ea" : "transparent",
-            border: mobileTab === "editor" ? "1px solid #a855f7" : "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 8,
-            color: mobileTab === "editor" ? "#ffffff" : "#a1a1aa",
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: "pointer"
-          }}
+          onClick={() => setMobileTab("canvas")}
+          className={`py-1 px-3 rounded-md font-semibold ${mobileTab === "canvas" ? "bg-[#0D99FF] text-white" : "text-zinc-400"}`}
         >
-          <Sparkles size={14} />
-          <span>Studio Inspector</span>
+          Canvas
+        </button>
+        <button
+          onClick={() => setMobileTab("inspector")}
+          className={`py-1 px-3 rounded-md font-semibold ${mobileTab === "inspector" ? "bg-[#0D99FF] text-white" : "text-zinc-400"}`}
+        >
+          Inspector
         </button>
       </div>
 
-      {/* 2. Main Studio Body Workspace */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Desktop View / Mobile Conditional View */}
-        <div className={`md:flex flex-1 h-full w-full relative overflow-hidden ${mobileTab === "preview" ? "flex" : "hidden"}`}>
-          {/* Left Layers & Pages Tree */}
-          <StudioLeftTree
-            layerNodes={layerNodes}
-            iframeRef={iframeRef}
-          />
+      {/* 1. Left Column: AI Conversation Sidebar (Exact Figma Make Layout) */}
+      <div className={`md:flex h-full shrink-0 ${mobileTab === "ai" ? "flex flex-1 w-full pt-10 md:pt-0" : "hidden"}`}>
+        <StudioAiSidebar
+          onBack={onBack}
+          targetSection={targetSection}
+          onSelectTargetSection={setTargetSection}
+          startGeneration={startGeneration}
+          handleRevert={handleRevert}
+          handleAccept={handleAccept}
+          handleDiscard={handleDiscard}
+        />
+      </div>
 
-          {/* Dynamic Figma Zoom Canvas */}
+      {/* 2. Right Main Area: Browser Bar + Live Canvas + Slide-out Inspector */}
+      <div className={`md:flex flex-1 flex-col h-full overflow-hidden relative ${mobileTab === "canvas" ? "flex pt-10 md:pt-0" : mobileTab === "inspector" ? "hidden" : "hidden md:flex"}`}>
+        {/* Top Browser Navigation Bar with URL input */}
+        <StudioBrowserBar
+          currentPath={currentPath}
+          onNavigatePath={handleNavigatePath}
+          onReload={handleReload}
+          isCodeView={isCodeView}
+          setIsCodeView={setIsCodeView}
+          handleSaveCode={handleSaveCode}
+        />
+
+        {/* Center Live Canvas Workspace */}
+        <div className="flex-1 flex relative overflow-hidden">
           <StudioCanvas
             iframeRef={iframeRef}
             selectedFigmaElement={selectedFigmaElement}
-            startGeneration={startGeneration}
-            targetSection={targetSection}
+            isCodeView={isCodeView}
+            rawCode={rawCode}
+            setRawCode={setRawCode}
+            handleSaveCode={handleSaveCode}
           />
-        </div>
 
-        {/* Right Inspector Dock */}
-        <div className={`md:flex h-full shrink-0 ${mobileTab === "editor" ? "flex flex-1 w-full" : "hidden"}`}>
+          {/* Slide-out Right Inspector Panel (Preserving extra design features) */}
           <StudioRightInspector
             iframeRef={iframeRef}
             selectedFigmaElement={selectedFigmaElement}
@@ -422,8 +404,25 @@ export function MakePage({ onBack }: MakePageProps) {
         </div>
       </div>
 
-      {/* 3. Studio Minimal Status Bar */}
-      <StudioStatusBar />
+      {/* Mobile Inspector View */}
+      {mobileTab === "inspector" && (
+        <div className="md:hidden flex flex-1 w-full h-full pt-10">
+          <StudioRightInspector
+            iframeRef={iframeRef}
+            selectedFigmaElement={selectedFigmaElement}
+            setSelectedFigmaElement={setSelectedFigmaElement}
+            saveContentEdits={saveContentEdits}
+            rawCode={rawCode}
+            setRawCode={setRawCode}
+            handleSaveCode={handleSaveCode}
+            handleRevert={handleRevert}
+            handleAccept={handleAccept}
+            handleDiscard={handleDiscard}
+            runAudit={runAudit}
+            startGeneration={startGeneration}
+          />
+        </div>
+      )}
     </div>
   );
 }
